@@ -48,6 +48,21 @@ final class AboutViewTests: XCTestCase {
         XCTAssertNotNil(aboutView)
     }
 
+    func testAboutLinksDistinguishCustomAndOriginalProjects() {
+        XCTAssertEqual(
+            AboutView.customRepositoryURL.absoluteString,
+            "https://github.com/siryeah/annotate-cn-custom"
+        )
+        XCTAssertEqual(
+            AboutView.customIssuesURL.absoluteString,
+            "https://github.com/siryeah/annotate-cn-custom/issues"
+        )
+        XCTAssertEqual(
+            AboutView.originalRepositoryURL.absoluteString,
+            "https://github.com/epilande/Annotate"
+        )
+    }
+
     // MARK: - Sparkle Integration Tests
 
     func testUpdaterControllerIsInjected() {

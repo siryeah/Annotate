@@ -18,7 +18,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.siryeah.Annotate
         MARKETING_VERSION: "1.4.1"
-        CURRENT_PROJECT_VERSION: "1"
+        CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_ENTITLEMENTS: Annotate/Annotate.entitlements
         SWIFT_VERSION: "5.0"
         MACOSX_DEPLOYMENT_TARGET: "14.0"

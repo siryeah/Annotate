@@ -9,6 +9,14 @@
 
 <p align="center"><a href="README.zh-Hans.md">简体中文说明</a></p>
 
+> [!IMPORTANT]
+> This repository is an unofficial Simplified Chinese custom edition based on
+> [epilande/Annotate](https://github.com/epilande/Annotate). Thanks to
+> Emmanuel Pilande for creating and open-sourcing the original project.
+> The Chinese customization and additional presentation features are maintained
+> by **AI 产品经理四月** (GitHub: [@siryeah](https://github.com/siryeah)).
+> See [NOTICE.md](NOTICE.md) for attribution details.
+
 ![annotate](https://github.com/user-attachments/assets/16baefb6-9fad-4702-9233-2991992ad030)
 
 ## ❓ Why?
@@ -40,7 +48,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 - 🧹 **Auto-Clear Option:** Automatically clear all drawings when toggling the overlay.
 - ⌨️ **Keyboard Shortcuts:** Switch between modes and toggle the overlay with customizable keyboard shortcuts.
 - ⚡ **Global Hotkey:** Toggle Annotate with a global shortcut.
-- 🔄 **Auto-Updates:** Automatic update checking with secure, cryptographically signed updates.
+- 🔒 **Custom Build Safety:** Automatic updates are disabled so upstream releases cannot overwrite custom features.
 
 ## 📦 Installation
 
@@ -48,19 +56,19 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 1. **Download the Application:**
 
-   - Go to [latest release](https://github.com/epilande/Annotate/releases/latest) page.
-   - Download the `Annotate-x.x.x.dmg` file for easy installation, or `Annotate-x.x.x.zip` for manual installation.
+   - Go to the [latest custom release](https://github.com/siryeah/annotate-cn-custom/releases/latest) page.
+   - Download `Annotate-CN-1.4.1-arm64.dmg` for drag-and-drop installation, or `Annotate-CN-1.4.1-arm64.zip` for manual installation.
 
 2. **Install the Application:**
 
    **Using DMG (Recommended):**
 
-   - Open the downloaded `Annotate-x.x.x.dmg` file.
+   - Open the downloaded `Annotate-CN-1.4.1-arm64.dmg` file.
    - Drag the `Annotate.app` into your **Applications** folder.
 
    **Using ZIP:**
 
-   - Unzip the downloaded `Annotate-x.x.x.zip` file.
+   - Unzip the downloaded `Annotate-CN-1.4.1-arm64.zip` file.
    - Drag the `Annotate.app` file into your **Applications** folder.
 
 3. **Run the Application:**
@@ -68,24 +76,17 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
    - Open your **Applications** folder and double-click `Annotate.app` to launch it.
 
 > [!NOTE]
-> Requires macOS 14 (Sonoma) or later. Supports both Apple Silicon and Intel Macs.
+> Requires macOS 14 (Sonoma) or later. This custom release supports Apple Silicon Macs.
 >
-> The app is code-signed and notarized for macOS Gatekeeper compatibility.
-
-### Homebrew
-
-Install via [Homebrew Cask](https://formulae.brew.sh/cask/annotate):
-
-```sh
-brew install --cask annotate
-```
+> The custom package uses an ad-hoc signature and is not Apple-notarized. If
+> Gatekeeper blocks the first launch, Control-click the app and choose **Open**.
 
 ### Build from Source
 
 1. **Clone the Repository:**
 
    ```sh
-   git clone https://github.com/epilande/Annotate
+   git clone https://github.com/siryeah/annotate-cn-custom.git
    ```
 
 2. **Open the Project in Xcode:**

@@ -2,6 +2,13 @@ import Sparkle
 import SwiftUI
 
 struct AboutView: View {
+    static let customRepositoryURL =
+        URL(string: "https://github.com/siryeah/annotate-cn-custom")!
+    static let customIssuesURL =
+        URL(string: "https://github.com/siryeah/annotate-cn-custom/issues")!
+    static let originalRepositoryURL =
+        URL(string: "https://github.com/epilande/Annotate")!
+
     private let updaterController: SPUStandardUpdaterController
 
     init(updaterController: SPUStandardUpdaterController) {
@@ -75,20 +82,26 @@ struct AboutView: View {
             // Links and Attribution
             VStack(spacing: 8) {
                 HStack(spacing: 16) {
-                    Link("GitHub", destination: URL(string: "https://github.com/epilande/Annotate")!)
+                    Link("Custom Edition", destination: Self.customRepositoryURL)
                         .font(.caption)
-                    
-                    Link("Report Issue", destination: URL(string: "https://github.com/epilande/Annotate/issues")!)
+
+                    Link("Original Project", destination: Self.originalRepositoryURL)
                         .font(.caption)
                 }
-                
-                Text("Created by epilande")
+
+                Link("Report Issue", destination: Self.customIssuesURL)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+
+                VStack(spacing: 3) {
+                    Text("Original project by epilande")
+                    Text("Customized by AI Product Manager April (@siryeah)")
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
         }
         .padding(24)
-        .frame(width: 320)
+        .frame(width: 360)
     }
 }
 

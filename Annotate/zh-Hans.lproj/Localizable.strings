@@ -44,6 +44,8 @@
 "Current Tool: %@" = "当前工具：%@";
 "Created by epilande" = "由 epilande 创建";
 "Crosshair" = "十字线";
+"Custom Edition" = "定制版仓库";
+"Customized by AI Product Manager April (@siryeah)" = "中文定制与功能改进：AI 产品经理四月（@siryeah）";
 "Customize board appearance and visibility" = "自定义画板外观和显示方式";
 "Cursor" = "光标";
 "Cursor Highlight" = "光标强调";
@@ -100,6 +102,8 @@
 "Line Width" = "线条粗细";
 "Line Width: %.2f px" = "线条粗细：%.2f 像素";
 "Outline" = "描边";
+"Original Project" = "原始项目";
+"Original project by epilande" = "原项目作者：epilande";
 "Overlay Mode: Always-On" = "标注层模式：常驻";
 "Overlay Mode: Interactive" = "标注层模式：交互";
 "Pen" = "画笔";
