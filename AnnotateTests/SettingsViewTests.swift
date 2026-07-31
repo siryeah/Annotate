@@ -94,7 +94,7 @@ final class SettingsViewTests: XCTestCase {
 
         let window = SettingsWindowManager.shared.settingsWindow
         XCTAssertNotNil(window, "show() must create the settings window")
-        XCTAssertEqual(window?.title, "Annotate Settings")
+        XCTAssertEqual(window?.title, L10n.text("Annotate Settings"))
         XCTAssertEqual(window?.titleVisibility, .hidden)
         XCTAssertEqual(window?.titlebarAppearsTransparent, true)
         XCTAssertEqual(window?.styleMask.contains(.fullSizeContentView), true)

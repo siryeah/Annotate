@@ -737,7 +737,7 @@ class OverlayWindow: NSPanel {
                 && overlayView.currentTool == .counter
             {
                 overlayView.resetCounter()
-                showToggleFeedback("Counter Reset", icon: "🔄")
+                showToggleFeedback(L10n.text("Counter Reset"), icon: "🔄")
             }
         default:
             super.keyDown(with: event)
@@ -951,7 +951,7 @@ class OverlayWindow: NSPanel {
     }
     
     private func showLineWidthFeedback(_ width: CGFloat) {
-        let text = String(format: "Line Width: %.2f px", width)
+        let text = L10n.format("Line Width: %.2f px", Double(width))
         showFeedback(text, lineColor: overlayView.currentColor, lineWidth: width)
     }
     
@@ -979,7 +979,7 @@ class OverlayWindow: NSPanel {
     }
 
     private func showFontSizeFeedback(_ size: CGFloat) {
-        let text = String(format: "Font Size: %.0f pt", size)
+        let text = L10n.format("Font Size: %.0f pt", Double(size))
         showFeedback(text)
     }
 
@@ -1000,7 +1000,7 @@ class OverlayWindow: NSPanel {
     }
 
     private func showCounterSizeFeedback(_ size: CGFloat) {
-        let text = String(format: "Counter Size: %.0f pt", size)
+        let text = L10n.format("Counter Size: %.0f pt", Double(size))
         showFeedback(text)
     }
     
@@ -1015,39 +1015,29 @@ class OverlayWindow: NSPanel {
         let hideToolFeedback = UserDefaults.standard.bool(forKey: UserDefaults.hideToolFeedbackKey)
         guard !hideToolFeedback else { return }
 
-        let toolName: String
+        let toolName = tool.displayName
         let icon: String
 
         switch tool {
         case .pen:
-            toolName = "Pen"
             icon = "✒️"
         case .arrow:
-            toolName = "Arrow"
             icon = "➡️"
         case .line:
-            toolName = "Line"
             icon = "📏"
         case .highlighter:
-            toolName = "Highlighter"
             icon = "🟨"
         case .rectangle:
-            toolName = "Rectangle"
             icon = "🔲"
         case .circle:
-            toolName = "Circle"
             icon = "⭕"
         case .counter:
-            toolName = "Counter"
             icon = "🔢"
         case .text:
-            toolName = "Text"
             icon = "📝"
         case .select:
-            toolName = "Select"
             icon = "👆"
         case .eraser:
-            toolName = "Eraser"
             icon = "🧹"
         }
 

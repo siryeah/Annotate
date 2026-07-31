@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Annotate",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v14)
     ],
@@ -25,6 +26,7 @@ let package = Package(
             resources: [
                 .process("Assets.xcassets"),
                 .process("Preview Content"),
+                .process("zh-Hans.lproj"),
             ]
         ),
         .testTarget(

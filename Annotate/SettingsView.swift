@@ -13,7 +13,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     /// Pane name shown in the sidebar, window title, and pane header.
-    var title: String { rawValue }
+    var title: String { L10n.text(rawValue) }
 
     /// SF Symbol shown in the sidebar icon tile.
     var symbol: String {
@@ -40,11 +40,11 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     /// Secondary line under the pane title in `PaneHeader`.
     var subtitle: String {
         switch self {
-        case .general: "Activation shortcuts and application behavior"
-        case .tools: "Default sizes for text and counter annotations"
-        case .board: "Board background appearance and visibility"
-        case .cursor: "Cursor style, spotlight, and click effects"
-        case .shortcuts: "Single-key shortcuts for tools and utilities"
+        case .general: L10n.text("Activation shortcuts and application behavior")
+        case .tools: L10n.text("Default sizes for text and counter annotations")
+        case .board: L10n.text("Board background appearance and visibility")
+        case .cursor: L10n.text("Cursor style, spotlight, and click effects")
+        case .shortcuts: L10n.text("Single-key shortcuts for tools and utilities")
         }
     }
 }
@@ -98,7 +98,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Annotate")
                             .font(.headline)
-                        Text("Version \(appVersion)")
+                        Text("\(L10n.text("Version")) \(appVersion)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -128,4 +128,3 @@ struct SettingsView: View {
         .frame(minWidth: 780, minHeight: 580)
     }
 }
-

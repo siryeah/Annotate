@@ -304,8 +304,8 @@ final class CursorHighlightManagerTests: XCTestCase {
 
     // MARK: - Active Cursor Style Tests
 
-    func testActiveCursorStyleDefaultsToNone() {
-        XCTAssertEqual(manager.activeCursorStyle, .none, "activeCursorStyle should default to .none")
+    func testActiveCursorStyleDefaultsToBrush() {
+        XCTAssertEqual(manager.activeCursorStyle, .brush, "activeCursorStyle should default to .brush")
     }
 
     func testActiveCursorStylePersistsToUserDefaults() {

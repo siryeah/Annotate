@@ -32,10 +32,10 @@ struct SettingsHeader: View {
             IconTile(symbol: icon, color: color, size: 26)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.headline)
                     .foregroundStyle(.primary)
-                Text(subtitle)
+                Text(LocalizedStringKey(subtitle))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

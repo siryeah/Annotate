@@ -24,20 +24,20 @@ enum ShortcutKey: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .pen: return "Pen"
-        case .arrow: return "Arrow"
-        case .line: return "Line"
-        case .highlighter: return "Highlighter"
-        case .rectangle: return "Rectangle"
-        case .circle: return "Circle"
-        case .counter: return "Counter"
-        case .text: return "Text"
-        case .select: return "Select"
-        case .eraser: return "Eraser"
-        case .colorPicker: return "Color Picker"
-        case .lineWidthPicker: return "Line Width"
-        case .toggleBoard: return "Toggle Board"
-        case .toggleClickEffects: return "Toggle Cursor Highlight"
+        case .pen: return L10n.text("Pen")
+        case .arrow: return L10n.text("Arrow")
+        case .line: return L10n.text("Line")
+        case .highlighter: return L10n.text("Highlighter")
+        case .rectangle: return L10n.text("Rectangle")
+        case .circle: return L10n.text("Circle")
+        case .counter: return L10n.text("Counter")
+        case .text: return L10n.text("Text")
+        case .select: return L10n.text("Select")
+        case .eraser: return L10n.text("Eraser")
+        case .colorPicker: return L10n.text("Color Picker")
+        case .lineWidthPicker: return L10n.text("Line Width")
+        case .toggleBoard: return L10n.text("Toggle Board")
+        case .toggleClickEffects: return L10n.text("Toggle Cursor Highlight")
         }
     }
 }

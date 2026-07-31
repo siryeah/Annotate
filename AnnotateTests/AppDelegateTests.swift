@@ -83,7 +83,10 @@ final class AppDelegateTests: XCTestCase, Sendable {
         if let menu = appDelegate.statusItem.menu,
             let currentToolItem = menu.item(at: 3)  // Index 3 is "Current Tool" menu item
         {
-            XCTAssertEqual(currentToolItem.title, "Current Tool: Line")
+            XCTAssertEqual(
+                currentToolItem.title,
+                L10n.format("Current Tool: %@", ToolType.line.displayName)
+            )
         }
     }
 
@@ -96,7 +99,10 @@ final class AppDelegateTests: XCTestCase, Sendable {
         if let menu = appDelegate.statusItem.menu,
             let currentToolItem = menu.item(at: 3)  // Index 3 is "Current Tool" menu item
         {
-            XCTAssertEqual(currentToolItem.title, "Current Tool: Counter")
+            XCTAssertEqual(
+                currentToolItem.title,
+                L10n.format("Current Tool: %@", ToolType.counter.displayName)
+            )
         }
     }
 
@@ -432,7 +438,10 @@ final class AppDelegateTests: XCTestCase, Sendable {
         if let menu = appDelegate.statusItem.menu,
             let currentToolItem = menu.item(at: 3)  // Index 3 is "Current Tool" menu item
         {
-            XCTAssertEqual(currentToolItem.title, "Current Tool: Rectangle")
+            XCTAssertEqual(
+                currentToolItem.title,
+                L10n.format("Current Tool: %@", ToolType.rectangle.displayName)
+            )
         }
     }
 
@@ -501,7 +510,11 @@ final class AppDelegateTests: XCTestCase, Sendable {
         if let menu = appDelegate.statusItem.menu,
             let currentToolItem = menu.item(at: 3)  // Index 3 is "Current Tool" menu item
         {
-            XCTAssertEqual(currentToolItem.title, "Current Tool: Highlighter", "Menu should reflect the restored tool, not the hardcoded default")
+            XCTAssertEqual(
+                currentToolItem.title,
+                L10n.format("Current Tool: %@", ToolType.highlighter.displayName),
+                "Menu should reflect the restored tool, not the hardcoded default"
+            )
         }
     }
 

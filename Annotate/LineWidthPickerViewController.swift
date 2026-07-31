@@ -23,7 +23,7 @@ class LineWidthPickerViewController: NSViewController {
     override func loadView() {
         let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: 120))
 
-        let titleLabel = NSTextField(labelWithString: "Line Width")
+        let titleLabel = NSTextField(labelWithString: L10n.text("Line Width"))
         titleLabel.font = NSFont.systemFont(ofSize: 13, weight: .medium)
         titleLabel.alignment = .center
 

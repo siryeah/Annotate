@@ -28,7 +28,7 @@ struct SettingsSliderRow: View {
                 }
             }
         } label: {
-            Text(title)
+            Text(LocalizedStringKey(title))
             if let valueText {
                 Text(valueText(value))
                     .monospacedDigit()

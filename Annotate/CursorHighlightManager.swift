@@ -3,16 +3,18 @@ import Cocoa
 /// Cursor style options for active overlay indicator
 enum ActiveCursorStyle: String, CaseIterable {
     case none = "none"
+    case brush = "brush"
     case outline = "outline"
     case circle = "circle"
     case crosshair = "crosshair"
 
     var displayName: String {
         switch self {
-        case .none: return "Default"
-        case .outline: return "Outline"
-        case .circle: return "Circle"
-        case .crosshair: return "Crosshair"
+        case .none: return L10n.text("Default")
+        case .brush: return L10n.text("Brush")
+        case .outline: return L10n.text("Outline")
+        case .circle: return L10n.text("Circle")
+        case .crosshair: return L10n.text("Crosshair")
         }
     }
 }
@@ -140,8 +142,8 @@ class CursorHighlightManager: @unchecked Sendable {
 
     var activeCursorStyle: ActiveCursorStyle {
         get {
-            let stored = userDefaults.string(forKey: UserDefaults.activeCursorStyleKey) ?? "none"
-            return ActiveCursorStyle(rawValue: stored) ?? .none
+            let stored = userDefaults.string(forKey: UserDefaults.activeCursorStyleKey) ?? "brush"
+            return ActiveCursorStyle(rawValue: stored) ?? .brush
         }
         set {
             userDefaults.set(newValue.rawValue, forKey: UserDefaults.activeCursorStyleKey)
@@ -152,7 +154,7 @@ class CursorHighlightManager: @unchecked Sendable {
     var activeCursorSize: CGFloat {
         get {
             let stored = userDefaults.double(forKey: UserDefaults.activeCursorSizeKey)
-            return stored > 0 ? CGFloat(stored) : 14.0
+            return stored > 0 ? CGFloat(stored) : 22.0
         }
         set {
             userDefaults.set(Double(newValue), forKey: UserDefaults.activeCursorSizeKey)

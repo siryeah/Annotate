@@ -47,7 +47,13 @@ struct AboutView: View {
                         .font(.title2)
                         .fontWeight(.semibold)
                     
-                    Text("Version \(appVersion) (\(buildNumber))")
+                    Text(
+                        L10n.format(
+                            "Version %@ (%@)",
+                            appVersion,
+                            buildNumber
+                        )
+                    )
                         .font(.body)
                         .foregroundColor(.secondary)
                 }
@@ -58,12 +64,7 @@ struct AboutView: View {
             
             // Update Section
             VStack(spacing: 12) {
-                Button("Check for Updates") {
-                    updaterController.checkForUpdates(nil)
-                }
-                .buttonStyle(.borderedProminent)
-                
-                Text("Automatic updates are enabled")
+                Text("Automatic updates are disabled for this custom build")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

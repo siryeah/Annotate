@@ -8,6 +8,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     static weak var shared: AppDelegate?
 
     var statusItem: NSStatusItem!
+    private weak var currentToolStatusItem: NSMenuItem?
+    private weak var currentDrawingModeStatusItem: NSMenuItem?
+    private weak var currentOverlayModeStatusItem: NSMenuItem?
     var colorPopover: NSPopover?
     var lineWidthPopover: NSPopover?
     var currentColor: NSColor = .systemRed
@@ -81,11 +84,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
         setupBoardObservers()
 
-        #if DEBUG
         let startUpdater = false
-        #else
-        let startUpdater = true
-        #endif
 
         updaterController = SPUStandardUpdaterController(
             startingUpdater: startUpdater,
@@ -151,14 +150,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             let menu = NSMenu()
 
             let colorItem = NSMenuItem(
-                title: "Color",
+                title: L10n.text("Color"),
                 action: #selector(showColorPicker(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .colorPicker))
             colorItem.keyEquivalentModifierMask = []
             menu.addItem(colorItem)
 
             let lineWidthItem = NSMenuItem(
-                title: "Line Width",
+                title: L10n.text("Line Width"),
                 action: #selector(showLineWidthPicker(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .lineWidthPicker))
             lineWidthItem.keyEquivalentModifierMask = []
@@ -167,78 +166,79 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             menu.addItem(NSMenuItem.separator())
 
             let currentToolItem = NSMenuItem(
-                title: "Current Tool: Pen",
+                title: L10n.format("Current Tool: %@", L10n.text("Pen")),
                 action: nil,
                 keyEquivalent: ""
             )
             currentToolItem.isEnabled = false
             menu.addItem(currentToolItem)
+            currentToolStatusItem = currentToolItem
 
             let arrowModeItem = NSMenuItem(
-                title: "Arrow",
+                title: L10n.text("Arrow"),
                 action: #selector(enableArrowMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .arrow))
             arrowModeItem.keyEquivalentModifierMask = []
             menu.addItem(arrowModeItem)
 
             let lineModeItem = NSMenuItem(
-                title: "Line",
+                title: L10n.text("Line"),
                 action: #selector(enableLineMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .line))
             lineModeItem.keyEquivalentModifierMask = []
             menu.addItem(lineModeItem)
 
             let penModeItem = NSMenuItem(
-                title: "Pen",
+                title: L10n.text("Pen"),
                 action: #selector(enablePenMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .pen))
             penModeItem.keyEquivalentModifierMask = []
             menu.addItem(penModeItem)
 
             let highlighterModeItem = NSMenuItem(
-                title: "Highlighter",
+                title: L10n.text("Highlighter"),
                 action: #selector(enableHighlighterMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .highlighter))
             highlighterModeItem.keyEquivalentModifierMask = []
             menu.addItem(highlighterModeItem)
 
             let rectangleModeItem = NSMenuItem(
-                title: "Rectangle",
+                title: L10n.text("Rectangle"),
                 action: #selector(enableRectangleMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .rectangle))
             rectangleModeItem.keyEquivalentModifierMask = []
             menu.addItem(rectangleModeItem)
 
             let circleModeItem = NSMenuItem(
-                title: "Circle",
+                title: L10n.text("Circle"),
                 action: #selector(enableCircleMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .circle))
             circleModeItem.keyEquivalentModifierMask = []
             menu.addItem(circleModeItem)
 
             let counterModeItem = NSMenuItem(
-                title: "Counter",
+                title: L10n.text("Counter"),
                 action: #selector(enableCounterMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .counter))
             counterModeItem.keyEquivalentModifierMask = []
             menu.addItem(counterModeItem)
 
             let textModeItem = NSMenuItem(
-                title: "Text",
+                title: L10n.text("Text"),
                 action: #selector(enableTextMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .text))
             textModeItem.keyEquivalentModifierMask = []
             menu.addItem(textModeItem)
             
             let selectModeItem = NSMenuItem(
-                title: "Select",
+                title: L10n.text("Select"),
                 action: #selector(enableSelectMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .select))
             selectModeItem.keyEquivalentModifierMask = []
             menu.addItem(selectModeItem)
 
             let eraserModeItem = NSMenuItem(
-                title: "Eraser",
+                title: L10n.text("Eraser"),
                 action: #selector(enableEraserMode(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .eraser))
             eraserModeItem.keyEquivalentModifierMask = []
@@ -246,12 +246,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
             menu.addItem(NSMenuItem.separator())
 
-            let isDarkMode =
-                NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            let boardType = isDarkMode ? "Blackboard" : "Whiteboard"
             let boardEnabled = userDefaults.bool(forKey: UserDefaults.enableBoardKey)
             let toggleBoardItem = NSMenuItem(
-                title: boardEnabled ? "Hide \(boardType)" : "Show \(boardType)",
+                title: boardToggleTitle(isEnabled: boardEnabled),
                 action: #selector(toggleBoardVisibility(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .toggleBoard))
             toggleBoardItem.keyEquivalentModifierMask = []
@@ -259,7 +256,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
             let clickEffectsEnabled = CursorHighlightManager.shared.clickEffectsEnabled
             let toggleClickEffectsItem = NSMenuItem(
-                title: clickEffectsEnabled ? "Disable Cursor Highlight" : "Enable Cursor Highlight",
+                title: clickEffectsEnabled
+                    ? L10n.text("Disable Cursor Highlight")
+                    : L10n.text("Enable Cursor Highlight"),
                 action: #selector(toggleClickEffects(_:)),
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .toggleClickEffects))
             toggleClickEffectsItem.keyEquivalentModifierMask = []
@@ -270,15 +269,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             let persistedFadeMode =
                 userDefaults.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
             let currentDrawingModeItem = NSMenuItem(
-                title: persistedFadeMode ? "Drawing Mode: Fade" : "Drawing Mode: Persist",
+                title: persistedFadeMode
+                    ? L10n.text("Drawing Mode: Fade")
+                    : L10n.text("Drawing Mode: Persist"),
                 action: nil,
                 keyEquivalent: ""
             )
             currentDrawingModeItem.isEnabled = false
             menu.addItem(currentDrawingModeItem)
+            currentDrawingModeStatusItem = currentDrawingModeItem
 
             let toggleDrawingModeItem = NSMenuItem(
-                title: persistedFadeMode ? "Persist" : "Fade",
+                title: persistedFadeMode ? L10n.text("Persist") : L10n.text("Fade"),
                 action: #selector(toggleFadeMode(_:)),
                 keyEquivalent: " "
             )
@@ -288,15 +290,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             menu.addItem(NSMenuItem.separator())
             
             let currentOverlayModeItem = NSMenuItem(
-                title: alwaysOnMode ? "Overlay Mode: Always-On" : "Overlay Mode: Interactive",
+                title: alwaysOnMode
+                    ? L10n.text("Overlay Mode: Always-On")
+                    : L10n.text("Overlay Mode: Interactive"),
                 action: nil,
                 keyEquivalent: ""
             )
             currentOverlayModeItem.isEnabled = false
             menu.addItem(currentOverlayModeItem)
+            currentOverlayModeStatusItem = currentOverlayModeItem
             
             let toggleAlwaysOnModeItem = NSMenuItem(
-                title: alwaysOnMode ? "Exit Always-On Mode" : "Always-On Mode",
+                title: alwaysOnMode
+                    ? L10n.text("Exit Always-On Mode")
+                    : L10n.text("Always-On Mode"),
                 action: #selector(toggleAlwaysOnMode),
                 keyEquivalent: ""
             )
@@ -305,7 +312,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             menu.addItem(NSMenuItem.separator())
 
             let clearAllItem = NSMenuItem(
-                title: "Clear All",
+                title: L10n.text("Clear All"),
                 action: #selector(clearAllAnnotations),
                 keyEquivalent: "\u{8}"
             )
@@ -313,13 +320,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             menu.addItem(clearAllItem)
 
             let undoItem = NSMenuItem(
-                title: "Undo",
+                title: L10n.text("Undo"),
                 action: #selector(undo),
                 keyEquivalent: "z")
             menu.addItem(undoItem)
 
             let redoItem = NSMenuItem(
-                title: "Redo",
+                title: L10n.text("Redo"),
                 action: #selector(redo),
                 keyEquivalent: "Z")
             menu.addItem(redoItem)
@@ -327,29 +334,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             menu.addItem(NSMenuItem.separator())
 
             let settingsItem = NSMenuItem(
-                title: "Settings...",
+                title: L10n.text("Settings..."),
                 action: #selector(showSettings),
                 keyEquivalent: ",")
             settingsItem.keyEquivalentModifierMask = [.command]
             menu.addItem(settingsItem)
 
-            let checkForUpdatesItem = NSMenuItem(
-                title: "Check for Updates...",
-                action: #selector(checkForUpdates),
-                keyEquivalent: "")
-            menu.addItem(checkForUpdatesItem)
-
             menu.addItem(NSMenuItem.separator())
 
             menu.addItem(
                 NSMenuItem(
-                    title: "Close",
+                    title: L10n.text("Close"),
                     action: #selector(closeOverlay),
                     keyEquivalent: "w"))
 
             menu.addItem(
                 NSMenuItem(
-                    title: "Quit", action: #selector(NSApplication.terminate(_:)),
+                    title: L10n.text("Quit"), action: #selector(NSApplication.terminate(_:)),
                     keyEquivalent: "q"))
 
             statusItem.menu = menu
@@ -629,16 +630,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         updateBoardMenuItems()
     }
 
+    private func boardToggleTitle(isEnabled: Bool) -> String {
+        let isBlackboard = BoardManager.shared.currentBoardType == .blackboard
+        switch (isEnabled, isBlackboard) {
+        case (true, true): return L10n.text("Hide Blackboard")
+        case (true, false): return L10n.text("Hide Whiteboard")
+        case (false, true): return L10n.text("Show Blackboard")
+        case (false, false): return L10n.text("Show Whiteboard")
+        }
+    }
+
     func updateBoardMenuItems() {
         guard let menu = statusItem.menu else { return }
 
-        let boardType = BoardManager.shared.displayName
         let boardEnabled = BoardManager.shared.isEnabled
 
         let toggleBoardItem = menu.items.first { $0.action == #selector(toggleBoardVisibility(_:)) }
 
         if let item = toggleBoardItem {
-            item.title = boardEnabled ? "Hide \(boardType)" : "Show \(boardType)"
+            item.title = boardToggleTitle(isEnabled: boardEnabled)
         }
     }
 
@@ -648,7 +658,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         CursorHighlightManager.shared.cursorHighlightEnabled = newState
         updateClickEffectsMenuItems()
 
-        let text = newState ? "Cursor Highlight On" : "Cursor Highlight Off"
+        let text = newState
+            ? L10n.text("Cursor Highlight On")
+            : L10n.text("Cursor Highlight Off")
         let icon = newState ? "👆" : "🚫"
         for (_, window) in overlayWindows where window.isVisible {
             window.showToggleFeedback(text, icon: icon)
@@ -659,31 +671,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         guard let menu = statusItem.menu else { return }
         if let item = menu.items.first(where: { $0.action == #selector(toggleClickEffects(_:)) }) {
             let isEnabled = CursorHighlightManager.shared.clickEffectsEnabled
-            item.title = isEnabled ? "Disable Cursor Highlight" : "Enable Cursor Highlight"
+            item.title = isEnabled
+                ? L10n.text("Disable Cursor Highlight")
+                : L10n.text("Enable Cursor Highlight")
         }
     }
 
     func updateAlwaysOnMenuItems() {
         guard let menu = statusItem.menu else { return }
-        
-        let currentOverlayModeItem = menu.items.first { 
-            $0.title.hasPrefix("Overlay Mode:")
+
+        if let item = currentOverlayModeStatusItem {
+            item.title = alwaysOnMode
+                ? L10n.text("Overlay Mode: Always-On")
+                : L10n.text("Overlay Mode: Interactive")
         }
-        if let item = currentOverlayModeItem {
-            item.title = alwaysOnMode ? "Overlay Mode: Always-On" : "Overlay Mode: Interactive"
-        }
-        
+
         let toggleAlwaysOnModeItem = menu.items.first { $0.action == #selector(toggleAlwaysOnMode) }
         if let item = toggleAlwaysOnModeItem {
-            item.title = alwaysOnMode ? "Exit Always-On Mode" : "Always-On Mode"
+            item.title = alwaysOnMode
+                ? L10n.text("Exit Always-On Mode")
+                : L10n.text("Always-On Mode")
         }
     }
-    
+
     func updateCurrentToolMenuItem(to toolName: String) {
-        guard let menu = statusItem.menu else { return }
-        
-        let currentToolItem = menu.items.first { $0.title.hasPrefix("Current Tool:") }
-        currentToolItem?.title = "Current Tool: \(toolName)"
+        currentToolStatusItem?.title = L10n.format("Current Tool: %@", toolName)
     }
     
     private func configureWindowForNormalMode(_ overlayWindow: OverlayWindow) {
@@ -707,21 +719,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     
     private func updateFadeModeMenuItems(isCurrentlyFadeMode: Bool) {
         guard let menu = statusItem.menu else { return }
-        
-        let currentDrawingModeItem = menu.items.first { 
-            $0.title.hasPrefix("Drawing Mode:") 
-        }
+
         let toggleDrawingModeItem = menu.items.first { 
             $0.action == #selector(toggleFadeMode(_:)) 
         }
 
-        currentDrawingModeItem?.title = isCurrentlyFadeMode
-            ? "Drawing Mode: Persist"
-            : "Drawing Mode: Fade"
+        currentDrawingModeStatusItem?.title = isCurrentlyFadeMode
+            ? L10n.text("Drawing Mode: Persist")
+            : L10n.text("Drawing Mode: Fade")
 
         toggleDrawingModeItem?.title = isCurrentlyFadeMode
-            ? "Fade"
-            : "Persist"
+            ? L10n.text("Fade")
+            : L10n.text("Persist")
     }
 
     func setupBoardObservers() {
@@ -843,7 +852,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
         updateFadeModeMenuItems(isCurrentlyFadeMode: isCurrentlyFadeMode)
 
-        let text = isCurrentlyFadeMode ? "Persist Mode" : "Fade Mode"
+        let text = isCurrentlyFadeMode
+            ? L10n.text("Persist Mode")
+            : L10n.text("Fade Mode")
         let icon = isCurrentlyFadeMode ? "📌" : "⏳"
         for (_, window) in overlayWindows where window.isVisible {
             window.showToggleFeedback(text, icon: icon)
@@ -913,7 +924,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         }
 
         for item in appMenu.items {
-            if item.title.hasPrefix("About") {
+            if item.action == #selector(NSApplication.orderFrontStandardAboutPanel(_:)) {
                 item.target = self
                 item.action = #selector(showAbout)
                 break
@@ -933,7 +944,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 defer: false
             )
             aboutWindow?.contentViewController = hostingController
-            aboutWindow?.title = "About Annotate"
+            aboutWindow?.title = L10n.text("About Annotate")
             aboutWindow?.isReleasedWhenClosed = false
             aboutWindow?.delegate = self
         }

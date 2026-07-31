@@ -1,6 +1,7 @@
 name: Annotate
 options:
-  bundleIdPrefix: com.epilande
+  bundleIdPrefix: com.siryeah
+  developmentLanguage: en
   deploymentTarget:
     macOS: "14.0"
 
@@ -15,7 +16,7 @@ targets:
       - package: Sparkle
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.epilande.Annotate
+        PRODUCT_BUNDLE_IDENTIFIER: com.siryeah.Annotate
         MARKETING_VERSION: "1.4.1"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_ENTITLEMENTS: Annotate/Annotate.entitlements

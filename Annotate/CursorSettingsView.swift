@@ -39,11 +39,14 @@ struct CursorSettingsView: View {
                     CursorHighlightManager.shared.activeCursorStyle = newValue
                 }
 
-                if activeCursorStyle == .circle || activeCursorStyle == .crosshair {
+                if activeCursorStyle == .brush
+                    || activeCursorStyle == .circle
+                    || activeCursorStyle == .crosshair
+                {
                     SettingsSliderRow(
                         title: "Cursor Size",
                         value: $activeCursorSize,
-                        range: 8...24,
+                        range: 12...28,
                         boundsText: { "\(Int($0))" }
                     )
                     .onChange(of: activeCursorSize) { _, newValue in
@@ -193,6 +196,9 @@ private struct ActiveCursorPreview: View {
             case .none:
                 drawPointerCursor(context: context, center: center, outerColor: .white)
 
+            case .brush:
+                drawBrushCursor(context: context, center: center, size: size)
+
             case .outline:
                 drawPointerCursor(context: context, center: center, outerColor: Color(color))
 
@@ -246,5 +252,45 @@ private struct ActiveCursorPreview: View {
 
         context.fill(outerPath, with: .color(outerColor))
         context.fill(innerPath, with: .color(.black))
+    }
+
+    private func drawBrushCursor(
+        context: GraphicsContext,
+        center: CGPoint,
+        size: CGFloat
+    ) {
+        let scale = size / 24
+        let origin = CGPoint(
+            x: center.x - 9.1 * scale,
+            y: center.y + 9.2 * scale
+        )
+
+        var path = Path()
+        path.move(to: origin)
+        path.addCurve(
+            to: CGPoint(x: origin.x + 6.2 * scale, y: origin.y - 3.2 * scale),
+            control1: CGPoint(x: origin.x + 1.2 * scale, y: origin.y - 0.2 * scale),
+            control2: CGPoint(x: origin.x + 4.2 * scale, y: origin.y - 0.8 * scale)
+        )
+        path.addLine(
+            to: CGPoint(x: origin.x + 18.2 * scale, y: origin.y - 15.2 * scale)
+        )
+        path.addCurve(
+            to: CGPoint(x: origin.x + 15.0 * scale, y: origin.y - 18.4 * scale),
+            control1: CGPoint(x: origin.x + 19.0 * scale, y: origin.y - 16.1 * scale),
+            control2: CGPoint(x: origin.x + 16.2 * scale, y: origin.y - 19.0 * scale)
+        )
+        path.addLine(
+            to: CGPoint(x: origin.x + 3.2 * scale, y: origin.y - 6.2 * scale)
+        )
+        path.addCurve(
+            to: origin,
+            control1: CGPoint(x: origin.x + 1.3 * scale, y: origin.y - 4.4 * scale),
+            control2: CGPoint(x: origin.x + 0.4 * scale, y: origin.y - 1.4 * scale)
+        )
+        path.closeSubpath()
+
+        context.fill(path, with: .color(Color(red: 31 / 255, green: 41 / 255, blue: 55 / 255)))
+        context.stroke(path, with: .color(.white), lineWidth: max(2.5, size * 0.14))
     }
 }

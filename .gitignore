@@ -20,6 +20,7 @@ playground.xcworkspace
 
 .build/
 build/
+dist/
 .DS_Store
 
 # Xcode Archives and Build Artifacts

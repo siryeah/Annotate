@@ -937,19 +937,64 @@ class OverlayView: NSView, NSTextFieldDelegate {
         path.stroke()
     }
 
-    private func drawRectangle(_ rectangle: Rectangle, alpha: CGFloat) {
-        let adaptedColor = adaptColorForBoard(rectangle.color, boardType: currentBoardType)
+    private let roundedRectangleCornerRadius: CGFloat = 12
 
-        let rect = NSRect(
+    private func rectangleBounds(for rectangle: Rectangle) -> NSRect {
+        NSRect(
             x: min(rectangle.startPoint.x, rectangle.endPoint.x),
             y: min(rectangle.startPoint.y, rectangle.endPoint.y),
             width: abs(rectangle.endPoint.x - rectangle.startPoint.x),
             height: abs(rectangle.endPoint.y - rectangle.startPoint.y)
         )
+    }
 
-        let path = NSBezierPath(rect: rect)
+    private func rectangleCornerRadius(for bounds: NSRect) -> CGFloat {
+        min(roundedRectangleCornerRadius, min(bounds.width, bounds.height) / 2)
+    }
+
+    func roundedRectanglePath(for rectangle: Rectangle) -> NSBezierPath {
+        let bounds = rectangleBounds(for: rectangle)
+        let radius = rectangleCornerRadius(for: bounds)
+        return NSBezierPath(
+            roundedRect: bounds,
+            xRadius: radius,
+            yRadius: radius
+        )
+    }
+
+    private func roundedRectangleStrokeContains(
+        _ rectangle: Rectangle,
+        point: NSPoint,
+        tolerance: CGFloat
+    ) -> Bool {
+        let bounds = rectangleBounds(for: rectangle)
+        let radius = rectangleCornerRadius(for: bounds)
+        let outerBounds = bounds.insetBy(dx: -tolerance, dy: -tolerance)
+        let outerPath = NSBezierPath(
+            roundedRect: outerBounds,
+            xRadius: radius + tolerance,
+            yRadius: radius + tolerance
+        )
+        guard outerPath.contains(point) else { return false }
+
+        let innerBounds = bounds.insetBy(dx: tolerance, dy: tolerance)
+        guard innerBounds.width > 0, innerBounds.height > 0 else { return true }
+
+        let innerRadius = max(0, radius - tolerance)
+        let innerPath = NSBezierPath(
+            roundedRect: innerBounds,
+            xRadius: innerRadius,
+            yRadius: innerRadius
+        )
+        return !innerPath.contains(point)
+    }
+
+    private func drawRectangle(_ rectangle: Rectangle, alpha: CGFloat) {
+        let adaptedColor = adaptColorForBoard(rectangle.color, boardType: currentBoardType)
+        let path = roundedRectanglePath(for: rectangle)
         adaptedColor.withAlphaComponent(alpha).setStroke()
         path.lineWidth = rectangle.lineWidth
+        path.lineJoinStyle = .round
         path.stroke()
     }
 
@@ -2134,24 +2179,15 @@ class OverlayView: NSView, NSTextFieldDelegate {
     }
     
     private func hitTestRectangle(_ rect: Rectangle, point: NSPoint) -> Bool {
-        let bounds = NSRect(
-            x: min(rect.startPoint.x, rect.endPoint.x),
-            y: min(rect.startPoint.y, rect.endPoint.y),
-            width: abs(rect.endPoint.x - rect.startPoint.x),
-            height: abs(rect.endPoint.y - rect.startPoint.y)
-        )
-        
-        // Only check edges (not inside)
         let baseTolerance = rect.lineWidth / 2.0
         let minClickableTolerance: CGFloat = 5.0
         let edgeTolerance = max(baseTolerance, minClickableTolerance)
-        
-        // Expand and shrink to create edge zone
-        let outerBounds = bounds.insetBy(dx: -edgeTolerance, dy: -edgeTolerance)
-        let innerBounds = bounds.insetBy(dx: edgeTolerance, dy: edgeTolerance)
-        
-        // Point is on edge if it's in outer but not in inner
-        return outerBounds.contains(point) && !innerBounds.contains(point)
+
+        return roundedRectangleStrokeContains(
+            rect,
+            point: point,
+            tolerance: edgeTolerance
+        )
     }
     
     private func hitTestCircle(_ circle: Circle, point: NSPoint) -> Bool {
@@ -2350,23 +2386,11 @@ class OverlayView: NSView, NSTextFieldDelegate {
     }
 
     private func rectangleIntersectsPoint(_ rectangle: Rectangle, point: NSPoint, radius: CGFloat) -> Bool {
-        // Check if point is near any of the four edges
-        let bounds = NSRect(
-            x: min(rectangle.startPoint.x, rectangle.endPoint.x),
-            y: min(rectangle.startPoint.y, rectangle.endPoint.y),
-            width: abs(rectangle.endPoint.x - rectangle.startPoint.x),
-            height: abs(rectangle.endPoint.y - rectangle.startPoint.y)
+        roundedRectangleStrokeContains(
+            rectangle,
+            point: point,
+            tolerance: radius + rectangle.lineWidth / 2
         )
-
-        let topLeft = NSPoint(x: bounds.minX, y: bounds.minY)
-        let topRight = NSPoint(x: bounds.maxX, y: bounds.minY)
-        let bottomLeft = NSPoint(x: bounds.minX, y: bounds.maxY)
-        let bottomRight = NSPoint(x: bounds.maxX, y: bounds.maxY)
-
-        return lineIntersectsPoint(topLeft, topRight, point: point, radius: radius) ||
-               lineIntersectsPoint(topRight, bottomRight, point: point, radius: radius) ||
-               lineIntersectsPoint(bottomRight, bottomLeft, point: point, radius: radius) ||
-               lineIntersectsPoint(bottomLeft, topLeft, point: point, radius: radius)
     }
 
     private func circleIntersectsPoint(_ circle: Circle, point: NSPoint, radius: CGFloat) -> Bool {

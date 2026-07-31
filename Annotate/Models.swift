@@ -15,16 +15,16 @@ enum ToolType: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .pen: return "Pen"
-        case .highlighter: return "Highlighter"
-        case .arrow: return "Arrow"
-        case .line: return "Line"
-        case .rectangle: return "Rectangle"
-        case .circle: return "Circle"
-        case .text: return "Text"
-        case .counter: return "Counter"
-        case .eraser: return "Eraser"
-        case .select: return "Select"
+        case .pen: return L10n.text("Pen")
+        case .highlighter: return L10n.text("Highlighter")
+        case .arrow: return L10n.text("Arrow")
+        case .line: return L10n.text("Line")
+        case .rectangle: return L10n.text("Rectangle")
+        case .circle: return L10n.text("Circle")
+        case .text: return L10n.text("Text")
+        case .counter: return L10n.text("Counter")
+        case .eraser: return L10n.text("Eraser")
+        case .select: return L10n.text("Select")
         }
     }
 }

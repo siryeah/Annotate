@@ -115,6 +115,24 @@ final class OverlayViewTests: XCTestCase, Sendable {
         overlayView.deleteLastItem()
         XCTAssertTrue(overlayView.lines.isEmpty)
     }
+
+    func testRectangleUsesRoundedPath() {
+        let rectangle = Rectangle(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 220, y: 180),
+            color: .systemRed,
+            lineWidth: 3
+        )
+
+        let path = overlayView.roundedRectanglePath(for: rectangle)
+
+        XCTAssertGreaterThan(
+            path.elementCount,
+            5,
+            "Rounded rectangle path should contain curve elements beyond a plain rectangle"
+        )
+        XCTAssertEqual(path.bounds, NSRect(x: 100, y: 100, width: 120, height: 80))
+    }
     
     func testLineFade() {
         // Create a line with a creation time

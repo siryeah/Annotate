@@ -22,6 +22,9 @@ class CursorHighlightView: NSView {
     private var cachedCrosshairPath: CGPath?
     private var cachedCrosshairSize: CGFloat = 0
 
+    private var cachedBrushPath: CGPath?
+    private var cachedBrushSize: CGFloat = 0
+
     private var cachedOutlineOuterPath: CGPath?
     private var cachedOutlineInnerPath: CGPath?
     private var cachedOutlineScale: CGFloat = 0
@@ -212,6 +215,27 @@ class CursorHighlightView: NSView {
             let localPoint = convert(windowPoint, from: nil)
 
             switch manager.activeCursorStyle {
+            case .brush:
+                let size = manager.activeCursorSize
+                let path = brushPath(for: size)
+                let outlineWidth = max(2.5, size * 0.14)
+
+                outlineLayer.path = path
+                outlineLayer.position = localPoint
+                outlineLayer.fillColor = Self.brushGraphiteCG
+                outlineLayer.strokeColor = Self.whiteCG
+                outlineLayer.lineJoin = .round
+                outlineLayer.lineCap = .round
+                outlineLayer.lineWidth = outlineWidth
+                outlineLayer.opacity = 1
+
+                cursorLayer.path = path
+                cursorLayer.position = localPoint
+                cursorLayer.fillColor = Self.brushGraphiteCG
+                cursorLayer.strokeColor = nil
+                cursorLayer.lineWidth = 0
+                cursorLayer.opacity = 1
+
             case .outline:
                 let scale = manager.systemCursorScale
                 let paths = outlineCursorPaths(for: scale)
@@ -310,6 +334,37 @@ class CursorHighlightView: NSView {
         return cachedCrosshairPath!
     }
 
+    /// A fixed-color brush silhouette. The path origin is the brush tip so the
+    /// visible point of contact exactly matches the annotation event location.
+    private func brushPath(for size: CGFloat) -> CGPath {
+        if size != cachedBrushSize || cachedBrushPath == nil {
+            let scale = size / 24
+            let path = CGMutablePath()
+            path.move(to: CGPoint(x: 0, y: 0))
+            path.addCurve(
+                to: CGPoint(x: 6.2 * scale, y: 3.2 * scale),
+                control1: CGPoint(x: 1.2 * scale, y: 0.2 * scale),
+                control2: CGPoint(x: 4.2 * scale, y: 0.8 * scale)
+            )
+            path.addLine(to: CGPoint(x: 18.2 * scale, y: 15.2 * scale))
+            path.addCurve(
+                to: CGPoint(x: 15.0 * scale, y: 18.4 * scale),
+                control1: CGPoint(x: 19.0 * scale, y: 16.1 * scale),
+                control2: CGPoint(x: 16.2 * scale, y: 19.0 * scale)
+            )
+            path.addLine(to: CGPoint(x: 3.2 * scale, y: 6.2 * scale))
+            path.addCurve(
+                to: CGPoint(x: 0, y: 0),
+                control1: CGPoint(x: 1.3 * scale, y: 4.4 * scale),
+                control2: CGPoint(x: 0.4 * scale, y: 1.4 * scale)
+            )
+            path.closeSubpath()
+            cachedBrushPath = path
+            cachedBrushSize = size
+        }
+        return cachedBrushPath!
+    }
+
     private func outlineCursorPaths(for scale: CGFloat) -> (outer: CGPath, inner: CGPath) {
         if scale != cachedOutlineScale || cachedOutlineOuterPath == nil {
             var transform = CGAffineTransform(scaleX: scale, y: scale)
@@ -323,6 +378,13 @@ class CursorHighlightView: NSView {
     // MARK: - Static Constants
 
     private static let blackCG: CGColor = NSColor.black.cgColor
+    private static let whiteCG: CGColor = NSColor.white.cgColor
+    private static let brushGraphiteCG: CGColor = NSColor(
+        srgbRed: 31.0 / 255.0,
+        green: 41.0 / 255.0,
+        blue: 55.0 / 255.0,
+        alpha: 1
+    ).cgColor
 
     private static let cursorOuterPath: CGPath = {
         let path = CGMutablePath()

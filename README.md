@@ -7,6 +7,8 @@
   <strong>A lightweight, keyboard-driven screen annotation tool for macOS that allows you to quickly draw, highlight, and annotate anything on your screen.</strong>
 </p>
 
+<p align="center"><a href="README.zh-Hans.md">简体中文说明</a></p>
+
 ![annotate](https://github.com/user-attachments/assets/16baefb6-9fad-4702-9233-2991992ad030)
 
 ## ❓ Why?

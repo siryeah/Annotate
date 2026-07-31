@@ -230,13 +230,13 @@ struct ShortcutSettingRow: View {
                             .foregroundStyle(isHoveringReset ? .secondary : .tertiary)
                     }
                     .buttonStyle(.plain)
-                    .help("Reset to default")
+                    .help(L10n.text("Reset to default"))
                     .onHover { isHoveringReset = $0 }
                 }
             }
         } label: {
-            Text(label)
-            Text(description)
+            Text(LocalizedStringKey(label))
+            Text(LocalizedStringKey(description))
         }
     }
 }
