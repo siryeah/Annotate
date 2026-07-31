@@ -119,6 +119,16 @@ brew install --cask annotate
 > [!TIP]
 > All tool shortcuts can be customized in Settings.
 
+#### 🌐 Global Shortcuts
+
+| Key                    | Action                  | Description                                                        |
+| ---------------------- | ----------------------- | ------------------------------------------------------------------ |
+| <kbd>Option</kbd>+<kbd>Z</kbd> | **Toggle Drawing**      | Enter or leave the interactive annotation layer                    |
+| <kbd>Option</kbd>+<kbd>X</kbd> | **Toggle Pointer Effects** | Show or hide cursor spotlight and click feedback in other apps |
+
+Pointer effects are temporarily hidden while the drawing layer is active, then
+resume automatically when drawing ends if they were previously enabled.
+
 #### 🎨 Drawing Tools
 
 | Key          | Tool            | Description                                                                |
@@ -320,6 +330,7 @@ Settings are organized into a sidebar with five panes: **General**, **Tools**, *
 ### General
 
 - **Activation Shortcut**: Set a global keyboard shortcut to activate Annotate (requires modifier keys).
+- **Pointer Effects Shortcut**: Set a global shortcut for cursor spotlight and click feedback while using other apps (requires modifier keys).
 - **Always-On Mode**: Set a global keyboard shortcut to keep Annotate active without auto-hide (requires modifier keys).
 - **Clear Drawings on Toggle**: Automatically clear all drawings when toggling the overlay off.
 - **Hide Tool Feedback**: Disable visual feedback when switching tools.
@@ -354,7 +365,7 @@ Customize single-key shortcuts for tools and utilities, organized into categorie
 - **Drawing Tools**: Pen, Arrow, Line, Highlighter
 - **Shapes**: Rectangle, Circle
 - **Advanced Tools**: Counter, Text, Select, Eraser
-- **Utilities**: Color Picker, Line Width, Toggle Board, Toggle Cursor Highlight
+- **Utilities**: Color Picker, Line Width, Toggle Board
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/0dcdd2c2-a26d-4fd4-9860-8f7340554ada">

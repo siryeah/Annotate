@@ -9,7 +9,11 @@ struct AnnotateApp: App {
         KeyboardShortcuts.onKeyDown(for: .toggleOverlay) {
             AppDelegate.shared?.toggleOverlay()
         }
-        
+
+        KeyboardShortcuts.onKeyDown(for: .togglePresentationEffects) {
+            AppDelegate.shared?.toggleClickEffects(nil)
+        }
+
         KeyboardShortcuts.onKeyDown(for: .toggleAlwaysOnMode) {
             AppDelegate.shared?.toggleAlwaysOnMode()
         }

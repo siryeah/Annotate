@@ -2,7 +2,14 @@ import Cocoa
 import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {
-    static let toggleOverlay = Self("toggleOverlay")
+    static let toggleOverlay = Self(
+        "toggleOverlay",
+        default: .init(.z, modifiers: .option)
+    )
+    static let togglePresentationEffects = Self(
+        "togglePresentationEffects",
+        default: .init(.x, modifiers: .option)
+    )
     static let toggleAlwaysOnMode = Self("toggleAlwaysOnMode")
 }
 

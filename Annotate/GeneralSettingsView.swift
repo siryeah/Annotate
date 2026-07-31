@@ -35,6 +35,14 @@ struct GeneralSettingsView: View {
                 }
 
                 LabeledContent {
+                    KeyboardShortcuts.Recorder("", name: .togglePresentationEffects)
+                } label: {
+                    Text("Pointer Effects Shortcut")
+                    Text("Toggle spotlight and click feedback while using other apps")
+                    Text("Requires modifier keys (⌘, ⌥, ⌃, or ⇧)")
+                }
+
+                LabeledContent {
                     KeyboardShortcuts.Recorder("", name: .toggleAlwaysOnMode)
                 } label: {
                     Text("Always-On Mode")
@@ -46,7 +54,7 @@ struct GeneralSettingsView: View {
                     icon: "keyboard",
                     color: .gray,
                     title: "Keyboard Shortcuts",
-                    subtitle: "Set keyboard shortcuts to activate Annotate and jump to specific modes"
+                    subtitle: "Set global shortcuts for drawing and presentation pointer effects"
                 )
             }
 

@@ -47,6 +47,7 @@ class CursorHighlightManager: @unchecked Sendable {
     var isMouseDown: Bool = false
     var mouseDownTime: CFTimeInterval = 0
     var releaseAnimation: ReleaseAnimation?
+    private(set) var presentationEffectsSuppressed = false
 
     let appearDuration: TimeInterval = 0.15
     let releaseDuration: TimeInterval = 0.2
@@ -192,16 +193,18 @@ class CursorHighlightManager: @unchecked Sendable {
 
     // MARK: - Computed State
 
-    var isActive: Bool { clickEffectsEnabled }
+    var isActive: Bool {
+        clickEffectsEnabled && !presentationEffectsSuppressed
+    }
 
     var shouldShowRing: Bool { isActive && isMouseDown }
 
     var shouldShowCursorHighlight: Bool {
-        cursorHighlightEnabled && !isMouseDown
+        cursorHighlightEnabled && !presentationEffectsSuppressed && !isMouseDown
     }
 
     var hasActiveAnimation: Bool {
-        releaseAnimation.map { !$0.isExpired } ?? false
+        !presentationEffectsSuppressed && (releaseAnimation.map { !$0.isExpired } ?? false)
     }
 
     /// Whether the animation loop should continue running
@@ -215,6 +218,16 @@ class CursorHighlightManager: @unchecked Sendable {
 
     /// Called when overlay visibility changes to trigger cursor updates
     func overlayVisibilityChanged() {
+        presentationEffectsSuppressed =
+            AppDelegate.shared?.overlayWindows.values.contains {
+                $0.isVisible && !$0.ignoresMouseEvents
+            } ?? false
+
+        if presentationEffectsSuppressed {
+            isMouseDown = false
+            releaseAnimation = nil
+        }
+
         notifyStateChanged()
     }
 

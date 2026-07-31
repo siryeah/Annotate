@@ -60,6 +60,7 @@
 "Default Tool" = "默认工具";
 "Delete" = "删除";
 "Disable Cursor Highlight" = "关闭光标强调";
+"Disable Pointer Effects" = "关闭指示效果";
 "Disable visual feedback when switching tools" = "切换工具时不显示视觉提示";
 "Display Annotate icon in the Dock" = "在程序坞中显示 Annotate 图标";
 "Draw circular shapes" = "绘制圆形";
@@ -76,6 +77,7 @@
 "Enable Board" = "启用画板";
 "Enable Click Effect" = "启用点击效果";
 "Enable Cursor Highlight" = "启用光标强调";
+"Enable Pointer Effects" = "开启指示效果";
 "Enable Cursor Spotlight" = "启用光标聚光";
 "Enable or disable cursor visual feedback" = "开启或关闭光标视觉反馈";
 "Eraser" = "橡皮擦";
@@ -105,6 +107,9 @@
 "Persist Mode" = "保留模式";
 "Persist Text Mode" = "连续文字模式";
 "Primary keyboard shortcut to activate Annotate" = "用于开启 Annotate 的主要快捷键";
+"Pointer Effects Off" = "指示效果已关闭";
+"Pointer Effects On" = "指示效果已开启";
+"Pointer Effects Shortcut" = "指示效果快捷键";
 "Quit" = "退出";
 "Recording..." = "请按快捷键…";
 "Rectangle" = "圆角矩形";
@@ -120,6 +125,7 @@
 "Select" = "选择";
 "Select and edit annotations" = "选择并编辑已有标注";
 "Set keyboard shortcuts to activate Annotate and jump to specific modes" = "设置 Annotate 激活快捷键和工具快捷键";
+"Set global shortcuts for drawing and presentation pointer effects" = "设置画笔与演示指示效果的全局快捷键";
 "Settings..." = "设置…";
 "Settings…" = "设置…";
 "Shapes" = "形状";
@@ -140,6 +146,7 @@
 "This will reset all keyboard shortcuts to their default values. This action cannot be undone." = "这会将全部快捷键恢复为默认值，且无法撤销。";
 "Toggle Board" = "切换画板";
 "Toggle Cursor Highlight" = "切换光标强调";
+"Toggle spotlight and click feedback while using other apps" = "操作网页或其他应用时切换光圈与点击反馈";
 "Tool selected each time the overlay is activated" = "每次开启标注层时自动选择的工具";
 "Tools" = "工具";
 "Undo" = "撤销";

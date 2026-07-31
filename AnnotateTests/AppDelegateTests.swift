@@ -357,6 +357,48 @@ final class AppDelegateTests: XCTestCase, Sendable {
 
     // MARK: - Toggle Click Effects Tests
 
+    func testPointerEffectsPauseDuringDrawingAndResumeAfterward() {
+        let cursorManager = CursorHighlightManager(userDefaults: testDefaults)
+        CursorHighlightManager.shared = cursorManager
+        defer { CursorHighlightManager.shared = CursorHighlightManager() }
+
+        cursorManager.clickEffectsEnabled = true
+        cursorManager.cursorHighlightEnabled = true
+
+        appDelegate.toggleOverlay()
+
+        XCTAssertTrue(cursorManager.presentationEffectsSuppressed)
+        XCTAssertFalse(cursorManager.isActive)
+        XCTAssertFalse(cursorManager.shouldShowCursorHighlight)
+        XCTAssertTrue(cursorManager.clickEffectsEnabled)
+        XCTAssertTrue(cursorManager.cursorHighlightEnabled)
+
+        appDelegate.toggleOverlay()
+
+        XCTAssertFalse(cursorManager.presentationEffectsSuppressed)
+        XCTAssertTrue(cursorManager.isActive)
+        XCTAssertTrue(cursorManager.shouldShowCursorHighlight)
+        XCTAssertTrue(cursorManager.clickEffectsEnabled)
+        XCTAssertTrue(cursorManager.cursorHighlightEnabled)
+    }
+
+    func testAlwaysOnOverlayDoesNotSuppressPointerEffects() {
+        let cursorManager = CursorHighlightManager(userDefaults: testDefaults)
+        CursorHighlightManager.shared = cursorManager
+        defer { CursorHighlightManager.shared = CursorHighlightManager() }
+
+        cursorManager.clickEffectsEnabled = true
+        cursorManager.cursorHighlightEnabled = true
+
+        appDelegate.toggleAlwaysOnMode()
+
+        XCTAssertFalse(cursorManager.presentationEffectsSuppressed)
+        XCTAssertTrue(cursorManager.isActive)
+        XCTAssertTrue(cursorManager.shouldShowCursorHighlight)
+
+        appDelegate.toggleAlwaysOnMode()
+    }
+
     func testToggleClickEffectsTogglesBothSettings() {
         let cursorManager = CursorHighlightManager(userDefaults: testDefaults)
         CursorHighlightManager.shared = cursorManager

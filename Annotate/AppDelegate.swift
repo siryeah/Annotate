@@ -1,5 +1,6 @@
 import Carbon
 import Cocoa
+import KeyboardShortcuts
 import Sparkle
 import SwiftUI
 
@@ -263,11 +264,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             let clickEffectsEnabled = CursorHighlightManager.shared.clickEffectsEnabled
             let toggleClickEffectsItem = NSMenuItem(
                 title: clickEffectsEnabled
-                    ? L10n.text("Disable Cursor Highlight")
-                    : L10n.text("Enable Cursor Highlight"),
+                    ? L10n.text("Disable Pointer Effects")
+                    : L10n.text("Enable Pointer Effects"),
                 action: #selector(toggleClickEffects(_:)),
-                keyEquivalent: ShortcutManager.shared.getShortcut(for: .toggleClickEffects))
-            toggleClickEffectsItem.keyEquivalentModifierMask = []
+                keyEquivalent: "")
+            toggleClickEffectsItem.setShortcut(for: .togglePresentationEffects)
             menu.addItem(toggleClickEffectsItem)
 
             menu.addItem(NSMenuItem.separator())
@@ -366,6 +367,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     func menuWillOpen(_ menu: NSMenu) {
         guard menu === statusItem.menu else { return }
 
+        KeyboardShortcuts.disable(
+            .toggleOverlay,
+            .togglePresentationEffects,
+            .toggleAlwaysOnMode
+        )
         isStatusMenuTracking = true
         let manager = CursorHighlightManager.shared
         manager.isMouseDown = false
@@ -381,6 +387,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     func menuDidClose(_ menu: NSMenu) {
         guard menu === statusItem.menu else { return }
 
+        KeyboardShortcuts.enable(
+            .toggleOverlay,
+            .togglePresentationEffects,
+            .toggleAlwaysOnMode
+        )
         isStatusMenuTracking = false
         let manager = CursorHighlightManager.shared
         manager.cursorPosition = NSEvent.mouseLocation
@@ -545,6 +556,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
         userDefaults.set(alwaysOnMode, forKey: UserDefaults.alwaysOnModeKey)
         updateAlwaysOnMenuItems()
+        CursorHighlightManager.shared.overlayVisibilityChanged()
     }
 
     @objc func closeOverlay() {
@@ -694,8 +706,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         updateClickEffectsMenuItems()
 
         let text = newState
-            ? L10n.text("Cursor Highlight On")
-            : L10n.text("Cursor Highlight Off")
+            ? L10n.text("Pointer Effects On")
+            : L10n.text("Pointer Effects Off")
         let icon = newState ? "👆" : "🚫"
         for (_, window) in overlayWindows where window.isVisible {
             window.showToggleFeedback(text, icon: icon)
@@ -707,8 +719,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         if let item = menu.items.first(where: { $0.action == #selector(toggleClickEffects(_:)) }) {
             let isEnabled = CursorHighlightManager.shared.clickEffectsEnabled
             item.title = isEnabled
-                ? L10n.text("Disable Cursor Highlight")
-                : L10n.text("Enable Cursor Highlight")
+                ? L10n.text("Disable Pointer Effects")
+                : L10n.text("Enable Pointer Effects")
         }
     }
 
@@ -842,8 +854,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .eraser)
             case #selector(toggleBoardVisibility(_:)):
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .toggleBoard)
-            case #selector(toggleClickEffects(_:)):
-                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .toggleClickEffects)
             default:
                 break
             }
