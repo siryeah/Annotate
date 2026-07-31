@@ -10,6 +10,7 @@ extension UserDefaults {
     static let clearDrawingsOnStartKey = "ClearDrawingsOnStart"
     static let hideDockIconKey = "HideDockIcon"
     static let fadeModeKey = "FadeMode"
+    static let fadeDurationKey = "FadeDuration"
     static let enableBoardKey = "EnableBoard"
     static let boardOpacityKey = "BoardOpacity"
     static let alwaysOnModeKey = "AlwaysOnMode"
@@ -37,6 +38,8 @@ let colorPalette: [NSColor] = [
 
 let defaultTextAnnotationFontSize: CGFloat = 18
 let textAnnotationFontSizeRange: ClosedRange<CGFloat> = 12...48
+let defaultAnnotationFadeDuration: CFTimeInterval = 1.25
+let annotationFadeDurationRange: ClosedRange<CFTimeInterval> = 1...8
 
 /// 14 pt reproduces counters' original 15 pt radius / 2.5 pt stroke; the badge
 /// scales from here (see `CounterAnnotation.radius`).
@@ -44,6 +47,16 @@ let defaultCounterFontSize: CGFloat = 14
 let counterFontSizeRange: ClosedRange<CGFloat> = 12...60
 
 extension UserDefaults {
+    var annotationFadeDuration: CFTimeInterval {
+        get {
+            let stored = double(forKey: Self.fadeDurationKey)
+            return stored > 0 ? stored : defaultAnnotationFadeDuration
+        }
+        set {
+            set(newValue, forKey: Self.fadeDurationKey)
+        }
+    }
+
     var textToolFontSize: CGFloat {
         get {
             let stored = double(forKey: Self.defaultTextFontSizeKey)

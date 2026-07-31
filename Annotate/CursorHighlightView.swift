@@ -9,6 +9,8 @@ class CursorHighlightView: NSView {
     private var spotlightLayer: CAShapeLayer?
     private var activeCursorLayer: CAShapeLayer?
     private var activeCursorOutlineLayer: CAShapeLayer?
+    private var brushWhiteDetailLayer: CAShapeLayer?
+    private var brushTipLayer: CAShapeLayer?
 
     // MARK: - Cached Paths (avoid per-frame allocations)
 
@@ -23,6 +25,8 @@ class CursorHighlightView: NSView {
     private var cachedCrosshairSize: CGFloat = 0
 
     private var cachedBrushPath: CGPath?
+    private var cachedBrushWhiteDetailPath: CGPath?
+    private var cachedBrushTipPath: CGPath?
     private var cachedBrushSize: CGFloat = 0
 
     private var cachedOutlineOuterPath: CGPath?
@@ -82,6 +86,16 @@ class CursorHighlightView: NSView {
         cursorLayer.opacity = 0
         layer?.addSublayer(cursorLayer)
         activeCursorLayer = cursorLayer
+
+        let whiteDetailLayer = CAShapeLayer()
+        whiteDetailLayer.opacity = 0
+        layer?.addSublayer(whiteDetailLayer)
+        brushWhiteDetailLayer = whiteDetailLayer
+
+        let tipLayer = CAShapeLayer()
+        tipLayer.opacity = 0
+        layer?.addSublayer(tipLayer)
+        brushTipLayer = tipLayer
     }
 
     func updateHoldRingPosition() {
@@ -201,16 +215,24 @@ class CursorHighlightView: NSView {
     func updateActiveCursor() {
         guard let window = self.window,
               let cursorLayer = activeCursorLayer,
-              let outlineLayer = activeCursorOutlineLayer else { return }
+              let outlineLayer = activeCursorOutlineLayer,
+              let whiteDetailLayer = brushWhiteDetailLayer,
+              let tipLayer = brushTipLayer else { return }
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
 
+        whiteDetailLayer.opacity = 0
+        tipLayer.opacity = 0
+        outlineLayer.shadowOpacity = 0
+        outlineLayer.shadowPath = nil
+
         let globalPosition = manager.cursorPosition
         let cursorOnThisScreen = window.screen?.frame.contains(globalPosition) ?? false
-        let screenHasActiveOverlay = window.screen.map { manager.isOverlayActiveOnScreen($0) } ?? false
+        let shouldShowActiveCursor =
+            window.screen.map { manager.shouldShowActiveCursorOnScreen($0) } ?? false
 
-        if screenHasActiveOverlay && cursorOnThisScreen && manager.activeCursorStyle != .none {
+        if shouldShowActiveCursor && cursorOnThisScreen {
             let windowPoint = window.convertPoint(fromScreen: globalPosition)
             let localPoint = convert(windowPoint, from: nil)
 
@@ -228,6 +250,11 @@ class CursorHighlightView: NSView {
                 outlineLayer.lineCap = .round
                 outlineLayer.lineWidth = outlineWidth
                 outlineLayer.opacity = 1
+                outlineLayer.shadowPath = path
+                outlineLayer.shadowColor = Self.blackCG
+                outlineLayer.shadowOpacity = 0.42
+                outlineLayer.shadowRadius = max(2.5, size * 0.11)
+                outlineLayer.shadowOffset = CGSize(width: 1.2, height: -1.4)
 
                 cursorLayer.path = path
                 cursorLayer.position = localPoint
@@ -235,6 +262,19 @@ class CursorHighlightView: NSView {
                 cursorLayer.strokeColor = nil
                 cursorLayer.lineWidth = 0
                 cursorLayer.opacity = 1
+
+                let details = brushDetailPaths(for: size)
+                whiteDetailLayer.path = details.white
+                whiteDetailLayer.position = localPoint
+                whiteDetailLayer.fillColor = Self.whiteCG
+                whiteDetailLayer.strokeColor = nil
+                whiteDetailLayer.opacity = 1
+
+                tipLayer.path = details.tip
+                tipLayer.position = localPoint
+                tipLayer.fillColor = Self.blackCG
+                tipLayer.strokeColor = nil
+                tipLayer.opacity = 1
 
             case .outline:
                 let scale = manager.systemCursorScale
@@ -292,6 +332,8 @@ class CursorHighlightView: NSView {
         } else {
             cursorLayer.opacity = 0
             outlineLayer.opacity = 0
+            whiteDetailLayer.opacity = 0
+            tipLayer.opacity = 0
         }
 
         CATransaction.commit()
@@ -360,9 +402,41 @@ class CursorHighlightView: NSView {
             )
             path.closeSubpath()
             cachedBrushPath = path
+            cachedBrushWhiteDetailPath = nil
+            cachedBrushTipPath = nil
             cachedBrushSize = size
         }
         return cachedBrushPath!
+    }
+
+    private func brushDetailPaths(for size: CGFloat) -> (white: CGPath, tip: CGPath) {
+        _ = brushPath(for: size)
+
+        if cachedBrushWhiteDetailPath == nil || cachedBrushTipPath == nil {
+            let scale = size / 24
+
+            let white = CGMutablePath()
+            white.move(to: CGPoint(x: 0.7 * scale, y: 0.7 * scale))
+            white.addLine(to: CGPoint(x: 5.8 * scale, y: 2.8 * scale))
+            white.addLine(to: CGPoint(x: 2.8 * scale, y: 5.8 * scale))
+            white.closeSubpath()
+            white.move(to: CGPoint(x: 10.7 * scale, y: 11.0 * scale))
+            white.addLine(to: CGPoint(x: 12.8 * scale, y: 9.0 * scale))
+            white.addLine(to: CGPoint(x: 15.7 * scale, y: 11.9 * scale))
+            white.addLine(to: CGPoint(x: 13.6 * scale, y: 14.0 * scale))
+            white.closeSubpath()
+
+            let tip = CGMutablePath()
+            tip.move(to: CGPoint(x: 0, y: 0))
+            tip.addLine(to: CGPoint(x: 2.25 * scale, y: 0.85 * scale))
+            tip.addLine(to: CGPoint(x: 0.85 * scale, y: 2.25 * scale))
+            tip.closeSubpath()
+
+            cachedBrushWhiteDetailPath = white
+            cachedBrushTipPath = tip
+        }
+
+        return (cachedBrushWhiteDetailPath!, cachedBrushTipPath!)
     }
 
     private func outlineCursorPaths(for scale: CGFloat) -> (outer: CGPath, inner: CGPath) {

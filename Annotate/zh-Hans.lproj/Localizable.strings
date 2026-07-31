@@ -67,6 +67,8 @@
 "Draw freeform pen strokes" = "自由手绘线条";
 "Draw rectangular shapes" = "绘制圆角矩形";
 "Draw straight lines" = "绘制直线";
+"Drawing Behavior" = "标注显示";
+"Drawing Mode" = "绘制模式";
 "Drawing Mode: Fade" = "绘制模式：淡出";
 "Drawing Mode: Persist" = "绘制模式：保留";
 "Drawing Tools" = "绘图工具";
@@ -79,6 +81,7 @@
 "Eraser" = "橡皮擦";
 "Exit Always-On Mode" = "退出常驻模式";
 "Fade" = "淡出";
+"Fade Duration" = "淡出时长";
 "Fade Mode" = "淡出模式";
 "Font Size: %.0f pt" = "文字大小：%.0f 磅";
 "General" = "通用";
@@ -145,3 +148,6 @@
 "Version" = "版本";
 "Version %@ (%@)" = "版本 %@（%@）";
 "Whiteboard" = "白板";
+"Choose whether annotations fade automatically or stay visible" = "选择标注自动淡出或持续保留";
+"%.0f seconds" = "%.0f 秒";
+"%.2f seconds" = "%.2f 秒";

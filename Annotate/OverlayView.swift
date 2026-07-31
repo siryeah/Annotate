@@ -98,7 +98,7 @@ class OverlayView: NSView, NSTextFieldDelegate {
     var currentLineWidth: CGFloat = 3.0
 
     var fadeMode: Bool = true
-    let fadeDuration: CFTimeInterval = 1.25
+    var fadeDuration: CFTimeInterval = defaultAnnotationFadeDuration
     var isReadOnlyMode: Bool = false
 
     private var cursorTrackingArea: NSTrackingArea?
@@ -832,11 +832,13 @@ class OverlayView: NSView, NSTextFieldDelegate {
         return boundingBox.contains(point)
     }
 
-    private func alphaForAge(_ age: CFTimeInterval) -> CGFloat {
-        let fadeDelay = fadeDuration / 2
-        if age <= fadeDelay { return 1.0 }
-        let fadeOut = fadeDelay - (age - fadeDelay)
-        return CGFloat(max(0, fadeOut))
+    func alphaForAge(_ age: CFTimeInterval) -> CGFloat {
+        let holdDuration = fadeDuration / 2
+        guard age > holdDuration else { return 1.0 }
+        guard fadeDuration > holdDuration else { return 0 }
+
+        let fadeProgress = (age - holdDuration) / (fadeDuration - holdDuration)
+        return CGFloat(max(0, min(1, 1 - fadeProgress)))
     }
     
     
@@ -845,11 +847,12 @@ class OverlayView: NSView, NSTextFieldDelegate {
     {
         guard !path.points.isEmpty else { return [] }
 
-        let validPoints = path.points.filter { (now - $0.timestamp) < (fadeDuration / 4) }
+        guard let creationTime = path.points.map(\.timestamp).min() else { return [] }
+        let age = now - creationTime
+        guard age < fadeDuration else { return [] }
 
-        guard validPoints.count > 1 else {
-            return validPoints
-        }
+        let validPoints = path.points
+        guard validPoints.count > 1 else { return validPoints }
 
         let line = NSBezierPath()
         line.move(to: validPoints[0].point)
@@ -859,10 +862,10 @@ class OverlayView: NSView, NSTextFieldDelegate {
         }
 
         if validPoints.count > 1 {
-            let strokeColor =
-                isHighlighter
-                ? path.color.withAlphaComponent(0.5)
-                : path.color.withAlphaComponent(1)
+            let alpha = alphaForAge(age)
+            let strokeColor = path.color.withAlphaComponent(
+                isHighlighter ? alpha * 0.5 : alpha
+            )
 
             strokeColor.setStroke()
             line.lineWidth = isHighlighter ? path.lineWidth * 4.67 : path.lineWidth

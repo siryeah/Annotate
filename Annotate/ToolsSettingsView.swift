@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct ToolsSettingsView: View {
+    @AppStorage(UserDefaults.fadeModeKey)
+    private var fadeMode = true
+    @AppStorage(UserDefaults.fadeDurationKey)
+    private var fadeDuration: Double = defaultAnnotationFadeDuration
     @AppStorage(UserDefaults.defaultTextFontSizeKey)
     private var defaultTextSize: Double = Double(defaultTextAnnotationFontSize)
     @AppStorage(UserDefaults.defaultCounterFontSizeKey)
@@ -11,9 +15,43 @@ struct ToolsSettingsView: View {
         let maxTextSize = Double(textAnnotationFontSizeRange.upperBound)
         let minCounterSize = Double(counterFontSizeRange.lowerBound)
         let maxCounterSize = Double(counterFontSizeRange.upperBound)
+        let minFadeDuration = Double(annotationFadeDurationRange.lowerBound)
+        let maxFadeDuration = Double(annotationFadeDurationRange.upperBound)
         Form {
             Section {
                 PaneHeader(pane: .tools)
+            }
+
+            Section {
+                Picker("Drawing Mode", selection: $fadeMode) {
+                    Text("Fade").tag(true)
+                    Text("Persist").tag(false)
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: fadeMode) { _, newValue in
+                    AppDelegate.shared?.setFadeMode(newValue)
+                }
+
+                if fadeMode {
+                    SettingsSliderRow(
+                        title: "Fade Duration",
+                        value: $fadeDuration,
+                        range: minFadeDuration...maxFadeDuration,
+                        step: 0.25,
+                        valueText: { L10n.format("%.2f seconds", $0) },
+                        boundsText: { L10n.format("%.0f seconds", $0) }
+                    )
+                    .onChange(of: fadeDuration) { _, newValue in
+                        AppDelegate.shared?.updateFadeDuration(newValue)
+                    }
+                }
+            } header: {
+                SettingsHeader(
+                    icon: "timer",
+                    color: .blue,
+                    title: "Drawing Behavior",
+                    subtitle: "Choose whether annotations fade automatically or stay visible"
+                )
             }
 
             Section {

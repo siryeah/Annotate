@@ -316,6 +316,21 @@ final class CursorHighlightManagerTests: XCTestCase {
         XCTAssertEqual(persistedValue, "outline", "activeCursorStyle should be persisted to UserDefaults")
     }
 
+    func testActiveCursorSizeDefaultsToPresentationFriendlySize() {
+        XCTAssertEqual(manager.activeCursorSize, 36)
+    }
+
+    func testActiveCursorSizePersistsToUserDefaults() {
+        manager.activeCursorSize = 44
+
+        XCTAssertEqual(manager.activeCursorSize, 44)
+        XCTAssertEqual(
+            testDefaults.double(forKey: UserDefaults.activeCursorSizeKey),
+            44,
+            accuracy: 0.001
+        )
+    }
+
     // MARK: - Per-Screen Active Cursor Tests
 
     func testShouldShowActiveCursorOnScreenReturnsFalseWhenStyleIsNone() {

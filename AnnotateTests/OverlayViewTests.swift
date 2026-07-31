@@ -45,6 +45,15 @@ final class OverlayViewTests: XCTestCase, Sendable {
         XCTAssertNil(overlayView.currentTextAnnotation)
     }
 
+    func testFadeAlphaHoldsThenFadesLinearly() {
+        overlayView.fadeDuration = 4
+
+        XCTAssertEqual(overlayView.alphaForAge(0), 1, accuracy: 0.001)
+        XCTAssertEqual(overlayView.alphaForAge(2), 1, accuracy: 0.001)
+        XCTAssertEqual(overlayView.alphaForAge(3), 0.5, accuracy: 0.001)
+        XCTAssertEqual(overlayView.alphaForAge(4), 0, accuracy: 0.001)
+    }
+
     func testToolSwitching() {
         // Test all tool types
         overlayView.currentTool = .pen

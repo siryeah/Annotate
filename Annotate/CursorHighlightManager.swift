@@ -154,7 +154,7 @@ class CursorHighlightManager: @unchecked Sendable {
     var activeCursorSize: CGFloat {
         get {
             let stored = userDefaults.double(forKey: UserDefaults.activeCursorSizeKey)
-            return stored > 0 ? CGFloat(stored) : 22.0
+            return stored > 0 ? CGFloat(stored) : 36.0
         }
         set {
             userDefaults.set(Double(newValue), forKey: UserDefaults.activeCursorSizeKey)
@@ -223,7 +223,9 @@ class CursorHighlightManager: @unchecked Sendable {
     }
 
     func shouldShowActiveCursorOnScreen(_ screen: NSScreen) -> Bool {
-        isOverlayActiveOnScreen(screen) && activeCursorStyle != .none
+        AppDelegate.shared?.isStatusMenuTracking != true
+            && isOverlayActiveOnScreen(screen)
+            && activeCursorStyle != .none
     }
 
     func hasAnyActiveOverlay() -> Bool {
@@ -232,7 +234,9 @@ class CursorHighlightManager: @unchecked Sendable {
 
     /// Used to keep cursor highlight windows active when any overlay is visible
     func shouldShowActiveCursorOnAnyScreen() -> Bool {
-        hasAnyActiveOverlay() && activeCursorStyle != .none
+        AppDelegate.shared?.isStatusMenuTracking != true
+            && hasAnyActiveOverlay()
+            && activeCursorStyle != .none
     }
 
     // MARK: - Release Animation

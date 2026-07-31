@@ -46,7 +46,7 @@ struct CursorSettingsView: View {
                     SettingsSliderRow(
                         title: "Cursor Size",
                         value: $activeCursorSize,
-                        range: 12...28,
+                        range: 20...56,
                         boundsText: { "\(Int($0))" }
                     )
                     .onChange(of: activeCursorSize) { _, newValue in
@@ -221,7 +221,7 @@ private struct ActiveCursorPreview: View {
                 context.stroke(path, with: .color(Color(color)), lineWidth: max(2.5, size / 5))
             }
         }
-        .frame(width: 40, height: 40)
+        .frame(width: 64, height: 64)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
     }
 
@@ -290,7 +290,57 @@ private struct ActiveCursorPreview: View {
         )
         path.closeSubpath()
 
-        context.fill(path, with: .color(Color(red: 31 / 255, green: 41 / 255, blue: 55 / 255)))
-        context.stroke(path, with: .color(.white), lineWidth: max(2.5, size * 0.14))
+        context.drawLayer { layerContext in
+            layerContext.addFilter(
+                .shadow(
+                    color: .black.opacity(0.42),
+                    radius: max(2.5, size * 0.11),
+                    x: 1.2,
+                    y: 1.4
+                )
+            )
+            layerContext.fill(
+                path,
+                with: .color(Color(red: 31 / 255, green: 41 / 255, blue: 55 / 255))
+            )
+            layerContext.stroke(path, with: .color(.white), lineWidth: max(2.5, size * 0.14))
+        }
+
+        var whiteDetails = Path()
+        whiteDetails.move(
+            to: CGPoint(x: origin.x + 0.7 * scale, y: origin.y - 0.7 * scale)
+        )
+        whiteDetails.addLine(
+            to: CGPoint(x: origin.x + 5.8 * scale, y: origin.y - 2.8 * scale)
+        )
+        whiteDetails.addLine(
+            to: CGPoint(x: origin.x + 2.8 * scale, y: origin.y - 5.8 * scale)
+        )
+        whiteDetails.closeSubpath()
+        whiteDetails.move(
+            to: CGPoint(x: origin.x + 10.7 * scale, y: origin.y - 11.0 * scale)
+        )
+        whiteDetails.addLine(
+            to: CGPoint(x: origin.x + 12.8 * scale, y: origin.y - 9.0 * scale)
+        )
+        whiteDetails.addLine(
+            to: CGPoint(x: origin.x + 15.7 * scale, y: origin.y - 11.9 * scale)
+        )
+        whiteDetails.addLine(
+            to: CGPoint(x: origin.x + 13.6 * scale, y: origin.y - 14.0 * scale)
+        )
+        whiteDetails.closeSubpath()
+        context.fill(whiteDetails, with: .color(.white))
+
+        var blackTip = Path()
+        blackTip.move(to: origin)
+        blackTip.addLine(
+            to: CGPoint(x: origin.x + 2.25 * scale, y: origin.y - 0.85 * scale)
+        )
+        blackTip.addLine(
+            to: CGPoint(x: origin.x + 0.85 * scale, y: origin.y - 2.25 * scale)
+        )
+        blackTip.closeSubpath()
+        context.fill(blackTip, with: .color(.black))
     }
 }

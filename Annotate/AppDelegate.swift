@@ -4,7 +4,7 @@ import Sparkle
 import SwiftUI
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverDelegate, NSMenuDelegate {
     static weak var shared: AppDelegate?
 
     var statusItem: NSStatusItem!
@@ -20,6 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     var aboutWindow: NSWindow?
     var updaterController: SPUStandardUpdaterController!
     let userDefaults: UserDefaults
+    private(set) var isStatusMenuTracking = false
 
     // Cursor Highlight
     var cursorHighlightWindows: [NSScreen: CursorHighlightWindow] = [:]
@@ -60,7 +61,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
         let persistedFadeMode =
             userDefaults.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
-        overlayWindows.values.forEach { $0.overlayView.fadeMode = persistedFadeMode }
+        let persistedFadeDuration = userDefaults.annotationFadeDuration
+        overlayWindows.values.forEach {
+            $0.overlayView.fadeMode = persistedFadeMode
+            $0.overlayView.fadeDuration = persistedFadeDuration
+        }
 
         let shouldStartInAlwaysOnMode = userDefaults.bool(forKey: UserDefaults.alwaysOnModeKey)
         if shouldStartInAlwaysOnMode {
@@ -148,6 +153,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             updateStatusBarIcon(with: .gray)
 
             let menu = NSMenu()
+            menu.delegate = self
 
             let colorItem = NSMenuItem(
                 title: L10n.text("Color"),
@@ -357,6 +363,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         }
     }
 
+    func menuWillOpen(_ menu: NSMenu) {
+        guard menu === statusItem.menu else { return }
+
+        isStatusMenuTracking = true
+        let manager = CursorHighlightManager.shared
+        manager.isMouseDown = false
+        manager.releaseAnimation = nil
+        manager.showSystemCursor()
+
+        cursorHighlightWindows.values.forEach { window in
+            window.stopAnimationLoop()
+            window.orderOut(nil)
+        }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        guard menu === statusItem.menu else { return }
+
+        isStatusMenuTracking = false
+        let manager = CursorHighlightManager.shared
+        manager.cursorPosition = NSEvent.mouseLocation
+        manager.updateCursorVisibility()
+        cursorHighlightWindows.values.forEach { $0.updateVisibility() }
+    }
+
     @objc func screenParametersChanged() {
         // Remove windows for screens that no longer exist
         overlayWindows = overlayWindows.filter { screen, _ in
@@ -377,6 +408,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 let savedLineWidth = userDefaults.object(forKey: UserDefaults.lineWidthKey) as? Double ?? 3.0
                 overlayWindow.overlayView.currentLineWidth = CGFloat(savedLineWidth)
                 overlayWindow.overlayView.currentTool = userDefaults.lastUsedTool
+                overlayWindow.overlayView.fadeMode =
+                    userDefaults.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
+                overlayWindow.overlayView.fadeDuration = userDefaults.annotationFadeDuration
 
                 overlayWindows[screen] = overlayWindow
             }
@@ -404,6 +438,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
             overlayWindow.setFrameOrigin(globalFrame.origin)
             overlayWindow.currentColor = currentColor
+            overlayWindow.overlayView.fadeDuration = userDefaults.annotationFadeDuration
             overlayWindows[screen] = overlayWindow
         }
     }
@@ -704,6 +739,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
         let persistedFadeMode = userDefaults.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
         overlayWindow.overlayView.fadeMode = persistedFadeMode
+        overlayWindow.overlayView.fadeDuration = userDefaults.annotationFadeDuration
     }
 
     private func configureWindowForAlwaysOnMode(_ overlayWindow: OverlayWindow) {
@@ -717,20 +753,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         overlayWindow.stopFadeLoop()
     }
     
-    private func updateFadeModeMenuItems(isCurrentlyFadeMode: Bool) {
+    private func updateFadeModeMenuItems(isFadeMode: Bool) {
         guard let menu = statusItem.menu else { return }
 
         let toggleDrawingModeItem = menu.items.first { 
             $0.action == #selector(toggleFadeMode(_:)) 
         }
 
-        currentDrawingModeStatusItem?.title = isCurrentlyFadeMode
-            ? L10n.text("Drawing Mode: Persist")
-            : L10n.text("Drawing Mode: Fade")
+        currentDrawingModeStatusItem?.title = isFadeMode
+            ? L10n.text("Drawing Mode: Fade")
+            : L10n.text("Drawing Mode: Persist")
 
-        toggleDrawingModeItem?.title = isCurrentlyFadeMode
-            ? L10n.text("Fade")
-            : L10n.text("Persist")
+        toggleDrawingModeItem?.title = isFadeMode
+            ? L10n.text("Persist")
+            : L10n.text("Fade")
     }
 
     func setupBoardObservers() {
@@ -843,21 +879,45 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
     @objc func toggleFadeMode(_ sender: Any?) {
         let isCurrentlyFadeMode = overlayWindows.values.first?.overlayView.fadeMode ?? true
+        let newFadeMode = !isCurrentlyFadeMode
+        setFadeMode(newFadeMode)
 
-        for window in overlayWindows.values {
-            window.overlayView.fadeMode.toggle()
-        }
-
-        userDefaults.set(!isCurrentlyFadeMode, forKey: UserDefaults.fadeModeKey)
-
-        updateFadeModeMenuItems(isCurrentlyFadeMode: isCurrentlyFadeMode)
-
-        let text = isCurrentlyFadeMode
-            ? L10n.text("Persist Mode")
-            : L10n.text("Fade Mode")
-        let icon = isCurrentlyFadeMode ? "📌" : "⏳"
+        let text = newFadeMode ? L10n.text("Fade Mode") : L10n.text("Persist Mode")
+        let icon = newFadeMode ? "⏳" : "📌"
         for (_, window) in overlayWindows where window.isVisible {
             window.showToggleFeedback(text, icon: icon)
+        }
+    }
+
+    func setFadeMode(_ isFadeMode: Bool) {
+        userDefaults.set(isFadeMode, forKey: UserDefaults.fadeModeKey)
+
+        for window in overlayWindows.values {
+            window.overlayView.fadeMode = isFadeMode
+            if isFadeMode, window.overlayView.isAnythingFading() {
+                window.startFadeLoop()
+            } else if !isFadeMode {
+                window.stopFadeLoop()
+                window.overlayView.needsDisplay = true
+            }
+        }
+
+        updateFadeModeMenuItems(isFadeMode: isFadeMode)
+    }
+
+    func updateFadeDuration(_ duration: CFTimeInterval) {
+        let clampedDuration = min(
+            max(duration, annotationFadeDurationRange.lowerBound),
+            annotationFadeDurationRange.upperBound
+        )
+        userDefaults.annotationFadeDuration = clampedDuration
+
+        for window in overlayWindows.values {
+            window.overlayView.fadeDuration = clampedDuration
+            if window.overlayView.fadeMode, window.overlayView.isAnythingFading() {
+                window.startFadeLoop()
+            }
+            window.overlayView.needsDisplay = true
         }
     }
 
@@ -1035,6 +1095,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     }
 
     func handleFlagsChanged(_ event: NSEvent) {
+        guard !isStatusMenuTracking else { return }
         CursorHighlightManager.shared.updateCursorVisibility()
     }
 
@@ -1078,6 +1139,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     }
 
     func handleGlobalMouseMove(_ event: NSEvent) {
+        guard !isStatusMenuTracking else { return }
+
         let manager = CursorHighlightManager.shared
         manager.cursorPosition = NSEvent.mouseLocation
         manager.updateCursorVisibility()
@@ -1100,6 +1163,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     }
 
     func handleGlobalMouseDown(_ event: NSEvent) {
+        guard !isStatusMenuTracking else { return }
+
         let manager = CursorHighlightManager.shared
         guard manager.isActive else { return }
 
@@ -1116,6 +1181,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     }
 
     func handleGlobalMouseUp(_ event: NSEvent) {
+        guard !isStatusMenuTracking else { return }
+
         let manager = CursorHighlightManager.shared
 
         guard manager.isActive else {

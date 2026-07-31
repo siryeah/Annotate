@@ -562,15 +562,9 @@ class OverlayWindow: NSPanel {
         case .pen:
             if var currentPath = overlayView.currentPath {
                 let finalTime = CACurrentMediaTime()
-                // Find the oldest point’s timestamp
-                guard let minTimestamp = currentPath.points.map({ $0.timestamp }).min() else {
-                    return
-                }
                 var updatedPoints = currentPath.points
-                // Shift each point so that the oldest is effectively 0 at mouseUp
-                let offset = finalTime - minTimestamp
                 for i in 0..<updatedPoints.count {
-                    updatedPoints[i].timestamp += offset
+                    updatedPoints[i].timestamp = finalTime
                 }
                 currentPath.points = updatedPoints
                 overlayView.registerUndo(action: .addPath(currentPath))
@@ -594,15 +588,9 @@ class OverlayWindow: NSPanel {
         case .highlighter:
             if var currentHighlight = overlayView.currentHighlight {
                 let finalTime = CACurrentMediaTime()
-                // Find the oldest point’s timestamp
-                guard let minTimestamp = currentHighlight.points.map({ $0.timestamp }).min() else {
-                    return
-                }
                 var updatedPoints = currentHighlight.points
-                // Shift each point so that the oldest is effectively 0 at mouseUp
-                let offset = finalTime - minTimestamp
                 for i in 0..<updatedPoints.count {
-                    updatedPoints[i].timestamp += offset
+                    updatedPoints[i].timestamp = finalTime
                 }
                 currentHighlight.points = updatedPoints
                 overlayView.registerUndo(action: .addHighlight(currentHighlight))

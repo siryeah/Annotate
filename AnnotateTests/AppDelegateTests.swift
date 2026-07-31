@@ -269,6 +269,38 @@ final class AppDelegateTests: XCTestCase, Sendable {
         XCTAssertFalse(persistedFadeMode, "UserDefaults should now store false for fade mode.")
     }
 
+    func testFadeDurationUpdatesAllWindowsAndPersists() {
+        appDelegate.updateFadeDuration(4.5)
+
+        XCTAssertEqual(testDefaults.annotationFadeDuration, 4.5, accuracy: 0.001)
+        for window in appDelegate.overlayWindows.values {
+            XCTAssertEqual(window.overlayView.fadeDuration, 4.5, accuracy: 0.001)
+        }
+    }
+
+    func testFadeDurationIsClampedToSupportedRange() {
+        appDelegate.updateFadeDuration(30)
+
+        XCTAssertEqual(
+            testDefaults.annotationFadeDuration,
+            annotationFadeDurationRange.upperBound,
+            accuracy: 0.001
+        )
+    }
+
+    func testStatusMenuTrackingPausesCursorWork() {
+        guard let menu = appDelegate.statusItem.menu else {
+            XCTFail("Status menu not initialized")
+            return
+        }
+
+        appDelegate.menuWillOpen(menu)
+        XCTAssertTrue(appDelegate.isStatusMenuTracking)
+
+        appDelegate.menuDidClose(menu)
+        XCTAssertFalse(appDelegate.isStatusMenuTracking)
+    }
+
     func testOverlayWindowsRestorePersistedFadeMode() {
         testDefaults.set(false, forKey: UserDefaults.fadeModeKey)
 
