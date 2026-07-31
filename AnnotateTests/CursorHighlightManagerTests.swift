@@ -331,6 +331,14 @@ final class CursorHighlightManagerTests: XCTestCase {
         )
     }
 
+    func testAnnotationColorUpdatesActiveCursorTipColorCache() {
+        manager.annotationColor = .systemYellow
+
+        let cachedColor = NSColor(cgColor: manager.annotationColorCG)
+        XCTAssertNotNil(cachedColor)
+        XCTAssertTrue(cachedColor?.isClose(to: .systemYellow) == true)
+    }
+
     // MARK: - Per-Screen Active Cursor Tests
 
     func testShouldShowActiveCursorOnScreenReturnsFalseWhenStyleIsNone() {

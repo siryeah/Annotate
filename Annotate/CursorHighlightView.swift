@@ -272,7 +272,7 @@ class CursorHighlightView: NSView {
 
                 tipLayer.path = details.tip
                 tipLayer.position = localPoint
-                tipLayer.fillColor = Self.blackCG
+                tipLayer.fillColor = manager.annotationColorCG
                 tipLayer.strokeColor = nil
                 tipLayer.opacity = 1
 
@@ -419,11 +419,6 @@ class CursorHighlightView: NSView {
             white.move(to: CGPoint(x: 0.7 * scale, y: 0.7 * scale))
             white.addLine(to: CGPoint(x: 5.8 * scale, y: 2.8 * scale))
             white.addLine(to: CGPoint(x: 2.8 * scale, y: 5.8 * scale))
-            white.closeSubpath()
-            white.move(to: CGPoint(x: 10.7 * scale, y: 11.0 * scale))
-            white.addLine(to: CGPoint(x: 12.8 * scale, y: 9.0 * scale))
-            white.addLine(to: CGPoint(x: 15.7 * scale, y: 11.9 * scale))
-            white.addLine(to: CGPoint(x: 13.6 * scale, y: 14.0 * scale))
             white.closeSubpath()
 
             let tip = CGMutablePath()

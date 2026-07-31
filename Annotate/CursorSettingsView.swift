@@ -197,7 +197,7 @@ private struct ActiveCursorPreview: View {
                 drawPointerCursor(context: context, center: center, outerColor: .white)
 
             case .brush:
-                drawBrushCursor(context: context, center: center, size: size)
+                drawBrushCursor(context: context, center: center, size: size, tipColor: Color(color))
 
             case .outline:
                 drawPointerCursor(context: context, center: center, outerColor: Color(color))
@@ -257,7 +257,8 @@ private struct ActiveCursorPreview: View {
     private func drawBrushCursor(
         context: GraphicsContext,
         center: CGPoint,
-        size: CGFloat
+        size: CGFloat,
+        tipColor: Color
     ) {
         let scale = size / 24
         let origin = CGPoint(
@@ -317,30 +318,17 @@ private struct ActiveCursorPreview: View {
             to: CGPoint(x: origin.x + 2.8 * scale, y: origin.y - 5.8 * scale)
         )
         whiteDetails.closeSubpath()
-        whiteDetails.move(
-            to: CGPoint(x: origin.x + 10.7 * scale, y: origin.y - 11.0 * scale)
-        )
-        whiteDetails.addLine(
-            to: CGPoint(x: origin.x + 12.8 * scale, y: origin.y - 9.0 * scale)
-        )
-        whiteDetails.addLine(
-            to: CGPoint(x: origin.x + 15.7 * scale, y: origin.y - 11.9 * scale)
-        )
-        whiteDetails.addLine(
-            to: CGPoint(x: origin.x + 13.6 * scale, y: origin.y - 14.0 * scale)
-        )
-        whiteDetails.closeSubpath()
         context.fill(whiteDetails, with: .color(.white))
 
-        var blackTip = Path()
-        blackTip.move(to: origin)
-        blackTip.addLine(
+        var colorTip = Path()
+        colorTip.move(to: origin)
+        colorTip.addLine(
             to: CGPoint(x: origin.x + 2.25 * scale, y: origin.y - 0.85 * scale)
         )
-        blackTip.addLine(
+        colorTip.addLine(
             to: CGPoint(x: origin.x + 0.85 * scale, y: origin.y - 2.25 * scale)
         )
-        blackTip.closeSubpath()
-        context.fill(blackTip, with: .color(.black))
+        colorTip.closeSubpath()
+        context.fill(colorTip, with: .color(tipColor))
     }
 }
