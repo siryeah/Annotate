@@ -9,6 +9,9 @@ Annotate 是一款轻量的 macOS 屏幕标注工具，适合直播授课、网�
 > 本定制版由 **AI 产品经理四月**（GitHub：
 > [@siryeah](https://github.com/siryeah)）修改与维护，属于非官方定制版本。
 
+项目的产品初衷、关键决策、代码入口和后续接手说明见
+[《产品决策与开发交接文档》](PROJECT_HANDOFF.zh-Hans.md)。
+
 ## 定制功能
 
 - 设置页、菜单栏、工具名称和操作提示支持简体中文。

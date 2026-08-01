@@ -17,6 +17,9 @@
 > by **AI 产品经理四月** (GitHub: [@siryeah](https://github.com/siryeah)).
 > See [NOTICE.md](NOTICE.md) for attribution details.
 
+Product decisions, implementation notes, and AI handoff guidance are documented
+in [PROJECT_HANDOFF.zh-Hans.md](PROJECT_HANDOFF.zh-Hans.md).
+
 ![annotate](https://github.com/user-attachments/assets/16baefb6-9fad-4702-9233-2991992ad030)
 
 ## ❓ Why?
