@@ -632,6 +632,14 @@ class OverlayWindow: NSPanel {
     }
 
     override func keyDown(with event: NSEvent) {
+        // Text editing has absolute priority over drawing tools and presentation navigation.
+        // Normally AppKit sends these events straight to the field editor; this guard also
+        // protects that behavior if an event reaches the window itself.
+        if overlayView.activeTextField != nil {
+            super.keyDown(with: event)
+            return
+        }
+
         let cmdPressed = event.modifierFlags.contains(.command)
         let key = event.characters?.lowercased() ?? ""
         
@@ -691,22 +699,26 @@ class OverlayWindow: NSPanel {
             } else {
                 AppDelegate.shared?.toggleOverlay()
             }
+            return
         case 51:  // Delete/Backspace key
             if event.modifierFlags.contains(.option) {
                 overlayView.clearAll()
             } else {
                 overlayView.deleteLastItem()
             }
+            return
         case 117:  // Forward Delete key (fn+delete)
             if event.modifierFlags.contains(.option) {
                 overlayView.clearAll()
             } else {
                 overlayView.deleteLastItem()
             }
-        case 49:  // Spacebar - toggle drawing mode
-            AppDelegate.shared?.toggleFadeMode(NSMenuItem())
+            return
         case 13:  // 'w' key
-            if cmdPressed { AppDelegate.shared?.closeOverlay() }
+            if cmdPressed {
+                AppDelegate.shared?.closeOverlay()
+                return
+            }
         case 6:  // 'z' key
             if cmdPressed {
                 if event.modifierFlags.contains(.shift) {
@@ -714,6 +726,7 @@ class OverlayWindow: NSPanel {
                 } else {
                     overlayView.undo()
                 }
+                return
             }
         case 15:  // 'r' key
             if cmdPressed
@@ -723,10 +736,20 @@ class OverlayWindow: NSPanel {
             {
                 overlayView.resetCounter()
                 showToggleFeedback(L10n.text("Counter Reset"), icon: "🔄")
+                return
             }
         default:
-            super.keyDown(with: event)
+            break
         }
+
+        if AppDelegate.shared?.forwardPresentationNavigationKey(
+            event,
+            isTextEditing: overlayView.activeTextField != nil
+        ) == true {
+            return
+        }
+
+        super.keyDown(with: event)
     }
 
     override func flagsChanged(with event: NSEvent) {

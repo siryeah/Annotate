@@ -161,7 +161,8 @@ resume automatically when drawing ends if they were previously enabled.
 
 | Shortcut                                             | Action               | Description                                                                |
 | ---------------------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
-| <kbd>Space</kbd>                                     | **Toggle Fade Mode** | Switch between fade and persist modes                                      |
+| <kbd>Space</kbd>, <kbd>Right</kbd>, <kbd>Down</kbd>, <kbd>Page Down</kbd> | **Next Slide** | Forward to the app used before annotation when text is not being edited |
+| <kbd>Left</kbd>, <kbd>Up</kbd>, <kbd>Page Up</kbd>   | **Previous Slide**   | Forward to the app used before annotation when text is not being edited |
 | <kbd>Delete</kbd>                                    | **Delete**           | Remove selected objects or most recent annotation                          |
 | <kbd>Option</kbd> + <kbd>Delete</kbd>                | **Clear All**        | Remove all annotations                                                     |
 | <kbd>Command</kbd> + <kbd>Z</kbd>                    | **Undo**             | Undo the last action                                                       |
@@ -299,7 +300,7 @@ The Eraser tool allows you to remove specific annotations by dragging over them:
 
 ### Drawing Modes
 
-Toggle between modes with the <kbd>Space</kbd> key.
+Toggle between modes from the menu bar or the Tools settings pane. The Space key is reserved for presentation navigation while the annotation overlay is active.
 
 #### Fade Mode
 

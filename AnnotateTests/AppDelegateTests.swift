@@ -7,6 +7,7 @@ import XCTest
 final class AppDelegateTests: XCTestCase, Sendable {
     var appDelegate: AppDelegate!
     var testDefaults: UserDefaults!
+    var forwardedPresentationEvents: [(CGKeyCode, Bool, pid_t)] = []
 
     nonisolated override func setUp() {
         super.setUp()
@@ -15,8 +16,28 @@ final class AppDelegateTests: XCTestCase, Sendable {
             testDefaults = TestUserDefaults.create()
             BoardManager.shared = BoardManager(userDefaults: testDefaults)
             ShortcutManager.shared = ShortcutManager(userDefaults: testDefaults)
+            forwardedPresentationEvents = []
 
-            appDelegate = AppDelegate(userDefaults: testDefaults)
+            let presentationForwarder = PresentationKeyForwarder(
+                targetProvider: {
+                    PresentationKeyForwarder.Target(
+                        processIdentifier: 4242,
+                        applicationName: "Test Presentation"
+                    )
+                },
+                accessChecker: { true },
+                accessRequester: { true },
+                eventPoster: { [weak self] keyCode, keyDown, processIdentifier in
+                    self?.forwardedPresentationEvents.append(
+                        (keyCode, keyDown, processIdentifier)
+                    )
+                }
+            )
+
+            appDelegate = AppDelegate(
+                userDefaults: testDefaults,
+                presentationKeyForwarder: presentationForwarder
+            )
             appDelegate.applicationDidFinishLaunching(
                 Notification(name: NSApplication.didFinishLaunchingNotification))
         }
@@ -53,6 +74,194 @@ final class AppDelegateTests: XCTestCase, Sendable {
         // Test tool items
         let penItem = menu.items.first { $0.action == #selector(AppDelegate.enablePenMode(_:)) }
         XCTAssertNotNil(penItem)
+
+        let presentationItem = menu.items.first {
+            $0.action == #selector(AppDelegate.togglePresentationNavigation(_:))
+        }
+        XCTAssertEqual(
+            presentationItem?.title,
+            L10n.text("Disable Presentation Navigation")
+        )
+
+        let fadeItem = menu.items.first {
+            $0.action == #selector(AppDelegate.toggleFadeMode(_:))
+        }
+        XCTAssertEqual(fadeItem?.keyEquivalent, "")
+    }
+
+    // MARK: - Presentation Navigation Tests
+
+    func testPresentationNavigationDefaultsToEnabledAndPersists() {
+        XCTAssertTrue(testDefaults.presentationNavigationEnabled)
+
+        appDelegate.setPresentationNavigationEnabled(false)
+        XCTAssertFalse(testDefaults.presentationNavigationEnabled)
+
+        let menuItem = appDelegate.statusItem.menu?.items.first {
+            $0.action == #selector(AppDelegate.togglePresentationNavigation(_:))
+        }
+        XCTAssertEqual(menuItem?.title, L10n.text("Enable Presentation Navigation"))
+    }
+
+    func testPresentationForwarderPostsKeyDownAndKeyUpForAllowedKey() throws {
+        let forwarder = appDelegate.presentationKeyForwarder
+        forwarder.beginSession()
+        let event = try XCTUnwrap(TestEvents.createKeyEvent(type: .keyDown, keyCode: 49))
+
+        let result = forwarder.forwardKeyDown(
+            event,
+            isEnabled: true,
+            isTextEditing: false
+        )
+
+        XCTAssertEqual(result, .forwarded("Test Presentation"))
+        XCTAssertEqual(forwardedPresentationEvents.count, 2)
+        XCTAssertEqual(forwardedPresentationEvents[0].0, 49)
+        XCTAssertTrue(forwardedPresentationEvents[0].1)
+        XCTAssertEqual(forwardedPresentationEvents[0].2, 4242)
+        XCTAssertFalse(forwardedPresentationEvents[1].1)
+    }
+
+    func testOverlaySpaceForwardsWithoutChangingFadeMode() throws {
+        let overlayWindow = try XCTUnwrap(appDelegate.overlayWindows.values.first)
+        overlayWindow.overlayView.fadeMode = true
+        appDelegate.presentationKeyForwarder.beginSession()
+        let event = try XCTUnwrap(TestEvents.createKeyEvent(type: .keyDown, keyCode: 49))
+
+        overlayWindow.keyDown(with: event)
+
+        XCTAssertTrue(overlayWindow.overlayView.fadeMode)
+        XCTAssertEqual(forwardedPresentationEvents.count, 2)
+    }
+
+    func testOverlayDoesNotForwardArrowWhileEditingText() throws {
+        let overlayWindow = try XCTUnwrap(appDelegate.overlayWindows.values.first)
+        let textField = NSTextField(frame: .zero)
+        overlayWindow.overlayView.activeTextField = textField
+        appDelegate.presentationKeyForwarder.beginSession()
+        let event = try XCTUnwrap(TestEvents.createKeyEvent(type: .keyDown, keyCode: 124))
+
+        overlayWindow.keyDown(with: event)
+
+        XCTAssertTrue(forwardedPresentationEvents.isEmpty)
+        overlayWindow.overlayView.activeTextField = nil
+    }
+
+    func testPresentationForwarderSupportsArrowAndPageKeys() throws {
+        let forwarder = appDelegate.presentationKeyForwarder
+        forwarder.beginSession()
+
+        for keyCode: UInt16 in [116, 121, 123, 124, 125, 126] {
+            let event = try XCTUnwrap(
+                TestEvents.createKeyEvent(type: .keyDown, keyCode: keyCode)
+            )
+            XCTAssertEqual(
+                forwarder.forwardKeyDown(
+                    event,
+                    isEnabled: true,
+                    isTextEditing: false
+                ),
+                .forwarded("Test Presentation")
+            )
+        }
+
+        XCTAssertEqual(forwardedPresentationEvents.count, 12)
+    }
+
+    func testPresentationForwarderDoesNotInterceptTextEditing() throws {
+        let forwarder = appDelegate.presentationKeyForwarder
+        forwarder.beginSession()
+
+        for keyCode: UInt16 in [49, 123, 124, 125, 126] {
+            let event = try XCTUnwrap(
+                TestEvents.createKeyEvent(type: .keyDown, keyCode: keyCode)
+            )
+            XCTAssertEqual(
+                forwarder.forwardKeyDown(
+                    event,
+                    isEnabled: true,
+                    isTextEditing: true
+                ),
+                .notHandled
+            )
+        }
+
+        XCTAssertTrue(forwardedPresentationEvents.isEmpty)
+    }
+
+    func testPresentationForwarderRejectsEscapeLettersAndModifiedKeys() throws {
+        let forwarder = appDelegate.presentationKeyForwarder
+        forwarder.beginSession()
+        let events = [
+            TestEvents.createKeyEvent(type: .keyDown, keyCode: 53),
+            TestEvents.createKeyEvent(type: .keyDown, keyCode: 0, characters: "a"),
+            TestEvents.createKeyEvent(type: .keyDown, keyCode: 49, modifierFlags: .command),
+            TestEvents.createKeyEvent(type: .keyDown, keyCode: 124, modifierFlags: .shift),
+        ]
+
+        for optionalEvent in events {
+            let event = try XCTUnwrap(optionalEvent)
+            XCTAssertEqual(
+                forwarder.forwardKeyDown(
+                    event,
+                    isEnabled: true,
+                    isTextEditing: false
+                ),
+                .notHandled
+            )
+        }
+
+        XCTAssertTrue(forwardedPresentationEvents.isEmpty)
+    }
+
+    func testPresentationForwarderConsumesRepeatWithoutPosting() throws {
+        let forwarder = appDelegate.presentationKeyForwarder
+        forwarder.beginSession()
+        let event = try XCTUnwrap(
+            TestEvents.createKeyEvent(type: .keyDown, keyCode: 124, isARepeat: true)
+        )
+
+        XCTAssertEqual(
+            forwarder.forwardKeyDown(event, isEnabled: true, isTextEditing: false),
+            .consumed
+        )
+        XCTAssertTrue(forwardedPresentationEvents.isEmpty)
+    }
+
+    func testPresentationForwarderReportsPermissionAndTargetFailures() throws {
+        let event = try XCTUnwrap(TestEvents.createKeyEvent(type: .keyDown, keyCode: 49))
+        let deniedForwarder = PresentationKeyForwarder(
+            targetProvider: {
+                PresentationKeyForwarder.Target(
+                    processIdentifier: 7,
+                    applicationName: "Denied Presentation"
+                )
+            },
+            accessChecker: { false },
+            accessRequester: { false },
+            eventPoster: { _, _, _ in XCTFail("Denied forwarder must not post events") }
+        )
+        deniedForwarder.beginSession()
+        XCTAssertEqual(
+            deniedForwarder.forwardKeyDown(event, isEnabled: true, isTextEditing: false),
+            .permissionRequired
+        )
+
+        let missingTargetForwarder = PresentationKeyForwarder(
+            targetProvider: { nil },
+            accessChecker: { true },
+            accessRequester: { true },
+            eventPoster: { _, _, _ in XCTFail("Missing target must not post events") }
+        )
+        missingTargetForwarder.beginSession()
+        XCTAssertEqual(
+            missingTargetForwarder.forwardKeyDown(
+                event,
+                isEnabled: true,
+                isTextEditing: false
+            ),
+            .targetUnavailable
+        )
     }
 
     func testOverlayWindows() {

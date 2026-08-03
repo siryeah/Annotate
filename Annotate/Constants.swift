@@ -31,6 +31,8 @@ extension UserDefaults {
     static let activeCursorStyleKey = "ActiveCursorStyle"
     static let activeCursorSizeKey = "ActiveCursorSize"
     static let persistTextModeKey = "PersistTextMode"
+    static let presentationNavigationEnabledKey = "PresentationNavigationEnabled"
+    static let presentationPostEventAccessRequestedKey = "PresentationPostEventAccessRequested"
     static let defaultTextFontSizeKey = "TextFontSize"
     static let defaultCounterFontSizeKey = "CounterFontSize"
     static let defaultToolKey = "DefaultTool"
@@ -54,6 +56,15 @@ let defaultCounterFontSize: CGFloat = 14
 let counterFontSizeRange: ClosedRange<CGFloat> = 12...60
 
 extension UserDefaults {
+    var presentationNavigationEnabled: Bool {
+        get {
+            object(forKey: Self.presentationNavigationEnabledKey) as? Bool ?? true
+        }
+        set {
+            set(newValue, forKey: Self.presentationNavigationEnabledKey)
+        }
+    }
+
     var annotationFadeDuration: CFTimeInterval {
         get {
             let stored = double(forKey: Self.fadeDurationKey)

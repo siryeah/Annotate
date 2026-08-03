@@ -5,6 +5,127 @@ import Sparkle
 import SwiftUI
 
 @MainActor
+final class PresentationKeyForwarder {
+    struct Target: Equatable {
+        let processIdentifier: pid_t
+        let applicationName: String
+    }
+
+    enum ForwardingResult: Equatable {
+        case notHandled
+        case consumed
+        case forwarded(String)
+        case permissionRequired
+        case targetUnavailable
+    }
+
+    typealias TargetProvider = @MainActor () -> Target?
+    typealias AccessChecker = @MainActor () -> Bool
+    typealias AccessRequester = @MainActor () -> Bool
+    typealias EventPoster = @MainActor (
+        _ keyCode: CGKeyCode,
+        _ keyDown: Bool,
+        _ processIdentifier: pid_t
+    ) -> Void
+
+    private static let navigationKeyCodes: Set<UInt16> = [
+        49,   // Space
+        116,  // Page Up
+        121,  // Page Down
+        123,  // Left Arrow
+        124,  // Right Arrow
+        125,  // Down Arrow
+        126,  // Up Arrow
+    ]
+
+    private let targetProvider: TargetProvider
+    private let accessChecker: AccessChecker
+    private let accessRequester: AccessRequester
+    private let eventPoster: EventPoster
+
+    private(set) var target: Target?
+
+    init(
+        targetProvider: @escaping TargetProvider = PresentationKeyForwarder.defaultTargetProvider,
+        accessChecker: @escaping AccessChecker = { CGPreflightPostEventAccess() },
+        accessRequester: @escaping AccessRequester = { CGRequestPostEventAccess() },
+        eventPoster: @escaping EventPoster = PresentationKeyForwarder.defaultEventPoster
+    ) {
+        self.targetProvider = targetProvider
+        self.accessChecker = accessChecker
+        self.accessRequester = accessRequester
+        self.eventPoster = eventPoster
+    }
+
+    var hasPostEventAccess: Bool {
+        accessChecker()
+    }
+
+    func beginSession() {
+        target = targetProvider()
+    }
+
+    func endSession() {
+        target = nil
+    }
+
+    @discardableResult
+    func requestPostEventAccess() -> Bool {
+        hasPostEventAccess || accessRequester()
+    }
+
+    func forwardKeyDown(
+        _ event: NSEvent,
+        isEnabled: Bool,
+        isTextEditing: Bool
+    ) -> ForwardingResult {
+        guard isEnabled, !isTextEditing else { return .notHandled }
+        guard Self.navigationKeyCodes.contains(event.keyCode) else { return .notHandled }
+
+        let conflictingModifiers: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
+        guard event.modifierFlags.intersection(conflictingModifiers).isEmpty else {
+            return .notHandled
+        }
+
+        // Consume repeats without forwarding them so one long press cannot skip many slides.
+        guard !event.isARepeat else { return .consumed }
+        guard let target else { return .targetUnavailable }
+        guard hasPostEventAccess else { return .permissionRequired }
+
+        let keyCode = CGKeyCode(event.keyCode)
+        eventPoster(keyCode, true, target.processIdentifier)
+        eventPoster(keyCode, false, target.processIdentifier)
+        return .forwarded(target.applicationName)
+    }
+
+    private static func defaultTargetProvider() -> Target? {
+        guard let application = NSWorkspace.shared.frontmostApplication else { return nil }
+        guard application.processIdentifier != ProcessInfo.processInfo.processIdentifier else {
+            return nil
+        }
+
+        return Target(
+            processIdentifier: application.processIdentifier,
+            applicationName: application.localizedName ?? L10n.text("Presentation App")
+        )
+    }
+
+    private static func defaultEventPoster(
+        keyCode: CGKeyCode,
+        keyDown: Bool,
+        processIdentifier: pid_t
+    ) {
+        let source = CGEventSource(stateID: .combinedSessionState)
+        let event = CGEvent(
+            keyboardEventSource: source,
+            virtualKey: keyCode,
+            keyDown: keyDown
+        )
+        event?.postToPid(processIdentifier)
+    }
+}
+
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverDelegate, NSMenuDelegate {
     static weak var shared: AppDelegate?
 
@@ -21,7 +142,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     var aboutWindow: NSWindow?
     var updaterController: SPUStandardUpdaterController!
     let userDefaults: UserDefaults
+    let presentationKeyForwarder: PresentationKeyForwarder
     private(set) var isStatusMenuTracking = false
+    private var didShowPresentationNavigationWarning = false
 
     // Cursor Highlight
     var cursorHighlightWindows: [NSScreen: CursorHighlightWindow] = [:]
@@ -35,11 +158,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
     override init() {
         self.userDefaults = .standard
+        self.presentationKeyForwarder = PresentationKeyForwarder()
         super.init()
     }
 
     init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
+        self.presentationKeyForwarder = PresentationKeyForwarder()
+        super.init()
+    }
+
+    init(userDefaults: UserDefaults, presentationKeyForwarder: PresentationKeyForwarder) {
+        self.userDefaults = userDefaults
+        self.presentationKeyForwarder = presentationKeyForwarder
         super.init()
     }
 
@@ -271,6 +402,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             toggleClickEffectsItem.setShortcut(for: .togglePresentationEffects)
             menu.addItem(toggleClickEffectsItem)
 
+            let presentationNavigationEnabled = userDefaults.presentationNavigationEnabled
+            let togglePresentationNavigationItem = NSMenuItem(
+                title: presentationNavigationEnabled
+                    ? L10n.text("Disable Presentation Navigation")
+                    : L10n.text("Enable Presentation Navigation"),
+                action: #selector(togglePresentationNavigation(_:)),
+                keyEquivalent: ""
+            )
+            menu.addItem(togglePresentationNavigationItem)
+
             menu.addItem(NSMenuItem.separator())
 
             let persistedFadeMode =
@@ -289,9 +430,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             let toggleDrawingModeItem = NSMenuItem(
                 title: persistedFadeMode ? L10n.text("Persist") : L10n.text("Fade"),
                 action: #selector(toggleFadeMode(_:)),
-                keyEquivalent: " "
+                keyEquivalent: ""
             )
-            toggleDrawingModeItem.keyEquivalentModifierMask = []
             menu.addItem(toggleDrawingModeItem)
 
             menu.addItem(NSMenuItem.separator())
@@ -516,6 +656,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             }
             updateStatusBarIcon(with: .gray)
             overlayWindow.orderOut(nil)
+            endPresentationNavigationSessionIfNeeded()
             CursorHighlightManager.shared.overlayVisibilityChanged()
         } else {
             configureWindowForNormalMode(overlayWindow)
@@ -527,6 +668,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             updateStatusBarIcon(with: currentColor)
             let screenFrame = currentScreen.frame
             overlayWindow.setFrame(screenFrame, display: true)
+            beginPresentationNavigationSession(for: overlayWindow)
             overlayWindow.makeKeyAndOrderFront(nil)
             CursorHighlightManager.shared.annotationColor = currentColor
             CursorHighlightManager.shared.overlayVisibilityChanged()
@@ -536,6 +678,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
     @objc func toggleAlwaysOnMode() {
         alwaysOnMode.toggle()
+        presentationKeyForwarder.endSession()
+        didShowPresentationNavigationWarning = false
 
         overlayWindows.values.forEach { overlayWindow in
             if let activeField = overlayWindow.overlayView.activeTextField {
@@ -569,6 +713,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             }
             updateStatusBarIcon(with: .gray)
             overlayWindow.orderOut(nil)
+            endPresentationNavigationSessionIfNeeded()
             CursorHighlightManager.shared.overlayVisibilityChanged()
         }
     }
@@ -588,6 +733,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             updateStatusBarIcon(with: currentColor)
             let screenFrame = currentScreen.frame
             overlayWindow.setFrame(screenFrame, display: true)
+            beginPresentationNavigationSession(for: overlayWindow)
             overlayWindow.makeKeyAndOrderFront(nil)
             CursorHighlightManager.shared.annotationColor = currentColor
             CursorHighlightManager.shared.overlayVisibilityChanged()
@@ -721,6 +867,129 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             item.title = isEnabled
                 ? L10n.text("Disable Pointer Effects")
                 : L10n.text("Enable Pointer Effects")
+        }
+    }
+
+    @objc func togglePresentationNavigation(_ sender: Any?) {
+        setPresentationNavigationEnabled(!userDefaults.presentationNavigationEnabled)
+    }
+
+    func setPresentationNavigationEnabled(_ isEnabled: Bool) {
+        userDefaults.presentationNavigationEnabled = isEnabled
+        updatePresentationNavigationMenuItem()
+
+        if isEnabled, !presentationKeyForwarder.hasPostEventAccess {
+            _ = requestPresentationNavigationAccess()
+        }
+
+        let text = isEnabled
+            ? L10n.text("Presentation Navigation On")
+            : L10n.text("Presentation Navigation Off")
+        let icon = isEnabled ? "⌨️" : "🚫"
+        for (_, window) in overlayWindows where window.isVisible {
+            window.showToggleFeedback(text, icon: icon)
+        }
+    }
+
+    @discardableResult
+    func requestPresentationNavigationAccess() -> Bool {
+        userDefaults.set(true, forKey: UserDefaults.presentationPostEventAccessRequestedKey)
+        let isGranted = presentationKeyForwarder.requestPostEventAccess()
+        didShowPresentationNavigationWarning = false
+        return isGranted
+    }
+
+    func updatePresentationNavigationMenuItem() {
+        guard let menu = statusItem.menu else { return }
+        if let item = menu.items.first(where: {
+            $0.action == #selector(togglePresentationNavigation(_:))
+        }) {
+            item.title = userDefaults.presentationNavigationEnabled
+                ? L10n.text("Disable Presentation Navigation")
+                : L10n.text("Enable Presentation Navigation")
+        }
+    }
+
+    /// Handles only the small, unmodified presentation-navigation allowlist. Returning true
+    /// means the overlay should consume the event, whether it was forwarded or a useful
+    /// permission/target warning was shown.
+    func forwardPresentationNavigationKey(
+        _ event: NSEvent,
+        isTextEditing: Bool
+    ) -> Bool {
+        let result = presentationKeyForwarder.forwardKeyDown(
+            event,
+            isEnabled: userDefaults.presentationNavigationEnabled,
+            isTextEditing: isTextEditing
+        )
+
+        switch result {
+        case .notHandled:
+            return false
+        case .consumed, .forwarded:
+            return true
+        case .permissionRequired:
+            showPresentationNavigationWarning(
+                L10n.text("Presentation key access required"),
+                icon: "⚠️"
+            )
+            return true
+        case .targetUnavailable:
+            showPresentationNavigationWarning(
+                L10n.text("Presentation target unavailable"),
+                icon: "⚠️"
+            )
+            return true
+        }
+    }
+
+    private func beginPresentationNavigationSession(for overlayWindow: OverlayWindow) {
+        presentationKeyForwarder.beginSession()
+        didShowPresentationNavigationWarning = false
+
+        guard userDefaults.presentationNavigationEnabled else { return }
+
+        if !presentationKeyForwarder.hasPostEventAccess,
+            !userDefaults.bool(forKey: UserDefaults.presentationPostEventAccessRequestedKey)
+        {
+            _ = requestPresentationNavigationAccess()
+        }
+
+        if !presentationKeyForwarder.hasPostEventAccess {
+            overlayWindow.showToggleFeedback(
+                L10n.text("Presentation key access required"),
+                icon: "⚠️"
+            )
+            didShowPresentationNavigationWarning = true
+        } else if let target = presentationKeyForwarder.target {
+            overlayWindow.showToggleFeedback(
+                L10n.format("Presentation keys connected: %@", target.applicationName),
+                icon: "⌨️"
+            )
+        } else {
+            overlayWindow.showToggleFeedback(
+                L10n.text("Presentation target unavailable"),
+                icon: "⚠️"
+            )
+            didShowPresentationNavigationWarning = true
+        }
+    }
+
+    private func endPresentationNavigationSessionIfNeeded() {
+        let hasInteractiveOverlay = overlayWindows.values.contains {
+            $0.isVisible && !$0.ignoresMouseEvents
+        }
+        if !hasInteractiveOverlay {
+            presentationKeyForwarder.endSession()
+            didShowPresentationNavigationWarning = false
+        }
+    }
+
+    private func showPresentationNavigationWarning(_ text: String, icon: String) {
+        guard !didShowPresentationNavigationWarning else { return }
+        didShowPresentationNavigationWarning = true
+        for (_, window) in overlayWindows where window.isVisible {
+            window.showToggleFeedback(text, icon: icon)
         }
     }
 
