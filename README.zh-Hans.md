@@ -28,8 +28,8 @@ Annotate 是一款轻量的 macOS 屏幕标注工具，适合直播授课、网�
 从 [Releases](https://github.com/siryeah/annotate-cn-custom/releases/latest)
 下载适合 Apple Silicon Mac 的安装包：
 
-- `Annotate-CN-1.4.1-arm64.dmg`：打开后将 Annotate 拖入“应用程序”。
-- `Annotate-CN-1.4.1-arm64.zip`：解压后将 `Annotate.app` 拖入“应用程序”。
+- `Annotate-CN-1.4.1-cn.2-arm64.dmg`：打开后将 Annotate 拖入“应用程序”。
+- `Annotate-CN-1.4.1-cn.2-arm64.zip`：解压后将 `Annotate.app` 拖入“应用程序”。
 
 当前定制包使用临时签名，尚未经过 Apple 公证。如果首次启动被系统拦截，请右键应用并选择“打开”。
 
@@ -40,7 +40,7 @@ Annotate 是一款轻量的 macOS 屏幕标注工具，适合直播授课、网�
 3. 按 `⌥X` 开启光圈和点击效果，此时仍可正常操作网页或其他应用。
 4. 在“光标”中选择“画笔”，可按需调整光标大小。
 5. 在“工具”中调整淡出时长，或选择“保留”让标注持续显示。
-6. 在“通用 → 演示翻页”中开启演示翻页并完成 macOS 权限授权。播放网页 HTML 幻灯片时，请先点击幻灯片页面，再按 `⌥Z` 开始标注。
+6. 在“通用 → 演示翻页”中开启演示翻页并完成 macOS 权限授权。若系统不再重复显示权限弹窗，点击“授权”会打开“系统设置 → 隐私与安全性 → 辅助功能”。播放网页 HTML 幻灯片时，请先点击幻灯片页面，再按 `⌥Z` 开始标注。
 
 标注状态下，空格、左/右/上/下和 Page Up/Down 会发送给开启标注前使用的应用；长按不会连续跳过多页。正在使用 Annotate 文字工具输入时，这些按键全部留给文字编辑，不会触发翻页。`Esc` 只退出 Annotate 标注，不会发送给 PPT 或浏览器。
 

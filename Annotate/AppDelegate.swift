@@ -127,6 +127,8 @@ final class PresentationKeyForwarder {
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverDelegate, NSMenuDelegate {
+    typealias SystemSettingsOpener = @MainActor () -> Bool
+
     static weak var shared: AppDelegate?
 
     var statusItem: NSStatusItem!
@@ -143,6 +145,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     var updaterController: SPUStandardUpdaterController!
     let userDefaults: UserDefaults
     let presentationKeyForwarder: PresentationKeyForwarder
+    private let presentationPermissionSettingsOpener: SystemSettingsOpener
     private(set) var isStatusMenuTracking = false
     private var didShowPresentationNavigationWarning = false
 
@@ -159,19 +162,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     override init() {
         self.userDefaults = .standard
         self.presentationKeyForwarder = PresentationKeyForwarder()
+        self.presentationPermissionSettingsOpener = AppDelegate.openAccessibilitySettings
         super.init()
     }
 
     init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
         self.presentationKeyForwarder = PresentationKeyForwarder()
+        self.presentationPermissionSettingsOpener = AppDelegate.openAccessibilitySettings
         super.init()
     }
 
-    init(userDefaults: UserDefaults, presentationKeyForwarder: PresentationKeyForwarder) {
+    init(
+        userDefaults: UserDefaults,
+        presentationKeyForwarder: PresentationKeyForwarder,
+        presentationPermissionSettingsOpener: @escaping SystemSettingsOpener =
+            AppDelegate.openAccessibilitySettings
+    ) {
         self.userDefaults = userDefaults
         self.presentationKeyForwarder = presentationKeyForwarder
+        self.presentationPermissionSettingsOpener = presentationPermissionSettingsOpener
         super.init()
+    }
+
+    private static func openAccessibilitySettings() -> Bool {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+        ) else { return false }
+        return NSWorkspace.shared.open(url)
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -895,6 +913,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     func requestPresentationNavigationAccess() -> Bool {
         userDefaults.set(true, forKey: UserDefaults.presentationPostEventAccessRequestedKey)
         let isGranted = presentationKeyForwarder.requestPostEventAccess()
+        if !isGranted {
+            // macOS only shows the privacy prompt once. After a denial, requesting again
+            // returns false without visible feedback, so take the user to the exact pane
+            // where the Post Event permission can be enabled manually.
+            _ = presentationPermissionSettingsOpener()
+        }
         didShowPresentationNavigationWarning = false
         return isGranted
     }

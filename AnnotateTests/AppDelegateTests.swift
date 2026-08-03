@@ -264,6 +264,51 @@ final class AppDelegateTests: XCTestCase, Sendable {
         )
     }
 
+    func testDeniedPresentationPermissionOpensAccessibilitySettings() {
+        var didOpenSettings = false
+        let deniedForwarder = PresentationKeyForwarder(
+            targetProvider: { nil },
+            accessChecker: { false },
+            accessRequester: { false },
+            eventPoster: { _, _, _ in }
+        )
+        let deniedDelegate = AppDelegate(
+            userDefaults: testDefaults,
+            presentationKeyForwarder: deniedForwarder,
+            presentationPermissionSettingsOpener: {
+                didOpenSettings = true
+                return true
+            }
+        )
+
+        XCTAssertFalse(deniedDelegate.requestPresentationNavigationAccess())
+        XCTAssertTrue(didOpenSettings)
+        XCTAssertTrue(
+            testDefaults.bool(forKey: UserDefaults.presentationPostEventAccessRequestedKey)
+        )
+    }
+
+    func testGrantedPresentationPermissionDoesNotOpenAccessibilitySettings() {
+        var didOpenSettings = false
+        let grantedForwarder = PresentationKeyForwarder(
+            targetProvider: { nil },
+            accessChecker: { true },
+            accessRequester: { XCTFail("Already granted access must not request again"); return false },
+            eventPoster: { _, _, _ in }
+        )
+        let grantedDelegate = AppDelegate(
+            userDefaults: testDefaults,
+            presentationKeyForwarder: grantedForwarder,
+            presentationPermissionSettingsOpener: {
+                didOpenSettings = true
+                return true
+            }
+        )
+
+        XCTAssertTrue(grantedDelegate.requestPresentationNavigationAccess())
+        XCTAssertFalse(didOpenSettings)
+    }
+
     func testOverlayWindows() {
         // Test initial setup
         XCTAssertFalse(appDelegate.overlayWindows.isEmpty)
