@@ -10,6 +10,9 @@ permissions:
 
 jobs:
   build-sign-notarize-release:
+    # Chinese custom releases are built and verified locally, then uploaded
+    # manually so the tested ad-hoc-signed artifact is not rebuilt with a new identity.
+    if: ${{ !contains(github.ref_name, '-cn.') }}
     name: Build → Sign → Notarize → Release
     runs-on: macos-26
     timeout-minutes: 15

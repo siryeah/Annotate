@@ -279,6 +279,8 @@ xcodebuild \
 
 本地没有 Developer ID 时，候选包使用 ad-hoc 签名且不启用 Hardened Runtime。Sparkle 内嵌组件必须从内到外逐个重新签名，最后再签主应用；否则主程序和内嵌组件的身份不一致，macOS 会显示“因为出现问题而无法打开”。正式对外分发时应改用 Developer ID、Hardened Runtime 和 Apple 公证。
 
+仓库原有 Release Actions 只适用于具备 Developer ID 和公证密钥的标准版本。工作流会跳过标签名包含 `-cn.` 的中文定制版；中文定制版必须上传本地已经完成完整测试、签名验证和人工验证的原始 ZIP/DMG，不能由 CI 重新构建，否则 ad-hoc 签名身份会变化。
+
 `dist/` 被 Git 忽略，安装包不会进入源码历史。长期备份依赖 GitHub Releases，不要只保留本地文件。
 
 ## 8. Git 与上游关系
