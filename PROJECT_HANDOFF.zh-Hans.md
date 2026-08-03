@@ -295,6 +295,16 @@ upstream https://github.com/epilande/Annotate.git
 
 必须保留 `LICENSE` 和 `NOTICE.md` 中的原作者信息。README 和 About 中也应同时提供“定制版仓库”和“原始项目”入口。
 
+### 8.1 测试版与正式版必须隔离
+
+后续给维护者测试的新构建，不得再直接覆盖正式版。至少同时区分以下三项：
+
+- 正式版：应用名 `Annotate`，Bundle ID `com.siryeah.Annotate`，安装包名称不带 `beta`。
+- 测试版：应用名 `Annotate 测试版`（英文可用 `Annotate Beta`），Bundle ID `com.siryeah.Annotate.beta`，安装包名称必须带 `beta` 和构建号。
+- 两个版本使用各自的权限记录和配置数据；测试版验证通过后再提高正式版构建号并单独生成正式包。
+
+只修改 Finder 中显示的应用名称是不够的，Bundle ID 也必须不同。测试版和正式版同时运行时会争用全局快捷键，因此默认只运行其中一个。ad-hoc 签名的每次重建仍可能改变 CDHash，影响该渠道自己的 TCC 权限；长期稳定方案仍是使用固定的 Developer ID 签名和 Apple 公证。
+
 ## 9. 录屏与直播兼容性说明
 
 当前覆盖层使用透明高层级 `NSPanel`。从实现原理看，共享“整个显示器”比只捕捉浏览器单个窗口更有机会同时录到笔画、自定义画笔和光圈效果，但不同软件的捕获方式并不完全一致，不能宣称所有第三方软件均已兼容。
